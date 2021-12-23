@@ -1,0 +1,22 @@
+separador de info de camada sla (FF)
+	Byte de indice de info extra
+fim separador de info de camada sla (FF)
+separador camadas(FF)
+	largura (00) altura (00) largura (00) altura
+fim separador camadas(FF)
+
+aba de endereçamento (00)
+	endereço | 3 bytes cor
+
+fim da aba de endereçamento e começo das telas (00)
+	frame
+		endereço,endereço,endereço
+	final do frame | cooldown pro próximo frame em ms
+final do arquivo
+
+
+
+
+
+o que precisa:
+cor, endereços pra cor, tempo em ms para frame, pixels separados a cada 3 bytes e algo para passar pra proxima linha
