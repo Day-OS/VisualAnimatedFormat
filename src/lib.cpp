@@ -11,12 +11,12 @@ VTNCRW::VTNCRW(/* args */)
     std::cout << "I'M LOADED!" << std::endl;
 }
 
- void readChunk(std::vector<unsigned char> file, int startingindex, int bytesize, unsigned char *output, int &lastaddress, bool isString = false){
+ void readChunk(std::vector<unsigned char> file, int &lastaddress, int bytesize, unsigned char *output, bool isString = false){
      
-    for (size_t i = startingindex; i < startingindex + bytesize; i++)
+    for (size_t i = 0; i < bytesize; i++)
     { 
         std::cout << std::hex << i  << " (" << int(*(output + i)) << ") |";
-        memset(output + i, file[i], 1);
+        memset(output + i, file[lastaddress + i], 1);
         std::cout << std::hex << i  << " (" << int(*(output + i)) << ") |" << std::endl;
     }
     if (isString)
@@ -24,7 +24,7 @@ VTNCRW::VTNCRW(/* args */)
         lastaddress -= 1;
         memset(output + bytesize-1, 0, 1);
     }
-    
+    std::cout << std::endl << int(output) << std::endl ;
     lastaddress += bytesize;
     return;
 }
@@ -46,13 +46,13 @@ VTNCFile VTNCRW::read(std::vector<unsigned char> file)
     int blockOffset = 0;
 
     
-    readChunk(file, 0, 5, TAG, blockOffset, true);
-    readChunk(file, blockOffset, 1, &output.layersQuantity, blockOffset);
+    readChunk(file, blockOffset, 5, TAG, true);
+    readChunk(file, blockOffset, 1, &output.layersQuantity);
 
     std::cout << std::endl << int(output.layersQuantity) << std::endl ;
     //readChunk(file, blockOffset, 1, &output.layersQuantity, blockOffset);
     /*
-    for (size_t i = 0; i < 4; i++)
+    for (size_t i = 0; i < 4; i++)  
     { 
         TAG[i] = file[i];
         //std::cout << std::hex << int(file[i]) << "|";
