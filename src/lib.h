@@ -3,6 +3,7 @@
 
 
 typedef unsigned char u8c;
+typedef unsigned char u8p;
 typedef unsigned short int u16c;
 #define U8Max 0xFF
 #define U16Max 0xFFFF
@@ -10,8 +11,8 @@ typedef unsigned short int u16c;
 
 
 class Resolution{
-    u16c x;
-    u16c y;
+    u16c x = 1;
+    u16c y = 1;
 };
 class RGB{
     u8c R;

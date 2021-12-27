@@ -48,8 +48,19 @@ VTNCFile VTNCRW::read(std::vector<unsigned char> file)
     
     readChunk(file, blockOffset, 5, TAG, true);
     readChunk(file, blockOffset, 1, &output.layersQuantity);
+    for (size_t i = 0; i < output.layersQuantity; i++){readChunk(file, blockOffset, 1, &output.layerKeys[i]);}
+    for (size_t i = 0; i < output.layersQuantity; i++){
+        Resolution res;
+        unsigned char u16[2] = "a";
+        readChunk(file, blockOffset, 2, u16);
+        int n = (u16[1] << 8) + u16[0];
+        //u16c b = u16c(a);
+        std::cout << std::dec << std::endl << "e pina e pina: " << n << std::endl ;
+        output.layersResolution[i] = res;
+    }
+    
 
-    std::cout << std::endl << int(output.layersQuantity) << std::endl ;
+    std::cout << std::endl << int(a) << std::endl ;
     //readChunk(file, blockOffset, 1, &output.layersQuantity, blockOffset);
     /*
     for (size_t i = 0; i < 4; i++)  
