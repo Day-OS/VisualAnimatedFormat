@@ -5,79 +5,90 @@
 
 
 
-VTNCRW::VTNCRW(/* args */) 
+VTNCRW::VTNCRW() 
 {
-    this->a = 's';
-    std::cout << "I'M LOADED!" << std::endl;
+    std::cout << GREEN << "VTNCRW Class CREATED." << RESET << std::endl;
 }
 
- void readChunk(std::vector<unsigned char> file, int &lastaddress, int bytesize, unsigned char *output, bool isString = false){
+void readChunk(std::vector<unsigned char> file, int &lastaddress, int bytesize, unsigned char *output, bool isString = false){
      
     for (size_t i = 0; i < bytesize; i++)
-    { 
-        std::cout << std::hex << i  << " (" << int(*(output + i)) << ") |";
+    {
         memset(output + i, file[lastaddress + i], 1);
-        std::cout << std::hex << i  << " (" << int(*(output + i)) << ") |" << std::endl;
     }
     if (isString)
     {
         lastaddress -= 1;
         memset(output + bytesize-1, 0, 1);
     }
-    std::cout << std::endl << int(output) << std::endl ;
     lastaddress += bytesize;
     return;
 }
-
+void readChunk16u(std::vector<unsigned char> file, int &lastaddress, u16c *output){
+    unsigned char buf[2];
+    readChunk(file, lastaddress, 2, buf);
+    *output = (buf[1] << 8) + buf[0];
+}
 VTNCFile VTNCRW::read(std::vector<unsigned char> file)
 {
     VTNCFile output;
     u8c _TAGNeeded [5] = "VTNC";
     u8c TAG [5] = {0};
     output.layersQuantity;
-    output.layerKeys[U8Max];
+    u8c layerKeys[U8Max];
     output.layersResolution[U8Max];
     output.colorsQuantity;
     output.Colors [U8Max];
     output.framesQuantity;
-    output.framesArray [U8Max];
 
-    int size = 4;
     int blockOffset = 0;
 
     
-    readChunk(file, blockOffset, 5, TAG, true);
+    readChunk(file, blockOffset, 5, TAG, true); if (memcmp(TAG, _TAGNeeded, 5) == 0) output.isFile = true;
     readChunk(file, blockOffset, 1, &output.layersQuantity);
-    for (size_t i = 0; i < output.layersQuantity; i++){readChunk(file, blockOffset, 1, &output.layerKeys[i]);}
+    for (size_t i = 0; i < output.layersQuantity; i++){readChunk(file, blockOffset, 1, &layerKeys[i]);}
     for (size_t i = 0; i < output.layersQuantity; i++){
         Resolution res;
-        unsigned char u16[2] = "a";
-        readChunk(file, blockOffset, 2, u16);
-        int n = (u16[1] << 8) + u16[0];
-        //u16c b = u16c(a);
-        std::cout << std::dec << std::endl << "e pina e pina: " << n << std::endl ;
+        readChunk16u(file, blockOffset, &res.x);
+        readChunk16u(file, blockOffset, &res.y);
         output.layersResolution[i] = res;
     }
+    readChunk(file, blockOffset, 1, &output.colorsQuantity);
+    for (size_t i = 0; i < output.colorsQuantity; i++){
+        u8c address = 0;
+        RGB temp;
+        readChunk(file, blockOffset, 1, &address);
+        readChunk(file, blockOffset, 1, &temp.R);
+        readChunk(file, blockOffset, 1, &temp.G);
+        readChunk(file, blockOffset, 1, &temp.B);
+        output.Colors[address] = temp;
+    }
+    readChunk(file, blockOffset, 1, &output.framesQuantity);
     
+    Layer layers[output.layersQuantity];
 
-    std::cout << std::endl << int(a) << std::endl ;
-    //readChunk(file, blockOffset, 1, &output.layersQuantity, blockOffset);
-    /*
-    for (size_t i = 0; i < 4; i++)  
-    { 
-        TAG[i] = file[i];
-        //std::cout << std::hex << int(file[i]) << "|";
-    }
-    */
-    if (memcmp(TAG, _TAGNeeded, 5) == 0)
-    {
-        output.isFile = true;
-    }
-    
    
-    /*
     
-    */
+    for (size_t layerindex = 0; layerindex < output.layersQuantity; layerindex++)
+    {
+        Layer currentLayer;
+        for (size_t frameindex = 0; layerindex < output.framesQuantity; layerindex++)
+        {
+            Frame currentFrame;
+            for (size_t i = 0; i < output.layersResolution[layerindex].x * output.layersResolution[layerindex].y; i++)
+            {
+                
+                readChunk(file, blockOffset, 1, &currentFrame.Pixels[i]);
+                std::cout << "| addr: " << int(currentFrame.Pixels[i]);
+            }
+            
+            //readChunk16u(file,blockOffset,&currentFrame.msDuration);
+            currentLayer.layerKey = layerKeys[layerindex];
+            layers[layerindex] = currentLayer;
+            //THIS STUFF CRASHES AFTER THIS POINT!!
+        }
+    }
+    output.Layers = layers;
     
     return output;
 }
