@@ -72,20 +72,19 @@ VTNCFile VTNCRW::read(std::vector<unsigned char> file)
     for (size_t layerindex = 0; layerindex < output.layersQuantity; layerindex++)
     {
         Layer currentLayer;
-        for (size_t frameindex = 0; layerindex < output.framesQuantity; layerindex++)
+        for (size_t frameindex = 0; frameindex < output.framesQuantity; frameindex++)
         {
             Frame currentFrame;
             for (size_t i = 0; i < output.layersResolution[layerindex].x * output.layersResolution[layerindex].y; i++)
             {
                 
                 readChunk(file, blockOffset, 1, &currentFrame.Pixels[i]);
-                std::cout << "| addr: " << int(currentFrame.Pixels[i]);
             }
             
-            //readChunk16u(file,blockOffset,&currentFrame.msDuration);
+            readChunk16u(file,blockOffset,&currentFrame.msDuration);
+            currentLayer.framesArray[frameindex] = currentFrame;
             currentLayer.layerKey = layerKeys[layerindex];
             layers[layerindex] = currentLayer;
-            //THIS STUFF CRASHES AFTER THIS POINT!!
         }
     }
     output.Layers = layers;
