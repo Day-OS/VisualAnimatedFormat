@@ -69,8 +69,9 @@ public:
 class VTNCRW
 {
 private:
-    /* data */
+
 public:
-    VTNCRW(/* args */);
+    VTNCRW();
     VTNCFile read(std::vector<unsigned char> file);
+    int write(VTNCFile file);
 };
