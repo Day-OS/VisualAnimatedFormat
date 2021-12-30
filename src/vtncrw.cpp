@@ -1,4 +1,4 @@
-#include "lib.h"
+#include "vtncrw.h"
 #include "iostream"
 #include "vector"
 #include "string.h"
