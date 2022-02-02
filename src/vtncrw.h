@@ -69,9 +69,9 @@ public:
 class VTNCRW
 {
 private:
-
+    u8c _TAGNeeded [5] = "VTNC";
 public:
     VTNCRW();
     VTNCFile read(std::vector<unsigned char> file);
-    int write(VTNCFile file);
+    std::vector<unsigned char> write(VTNCFile file);
 };

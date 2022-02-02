@@ -32,7 +32,6 @@ void readChunk16u(std::vector<unsigned char> file, int &lastaddress, u16c *outpu
 VTNCFile VTNCRW::read(std::vector<unsigned char> file)
 {
     VTNCFile output;
-    u8c _TAGNeeded [5] = "VTNC";
     u8c TAG [5] = {0};
     output.layersQuantity;
     u8c layerKeys[U8Max];
@@ -90,4 +89,30 @@ VTNCFile VTNCRW::read(std::vector<unsigned char> file)
     output.Layers = layers;
     
     return output;
+}
+
+std::vector<unsigned char> VTNCRW::write(VTNCFile file) 
+{
+    //THIS CODE SUUUUUUUUUUUUUUUUUUUUUUCKS
+
+    std::vector<unsigned char> buffer = {0x00, 0x00, 0x00, 0x00, 0x00};
+    size_t index = 0;
+    size_t tempindex = 0;
+    VTNCFile buffergenerated;
+
+    tempindex = index;
+    for (index = index; index < tempindex + 4; index++)
+    {
+        buffer[index] = _TAGNeeded[index];
+    }
+    std::cout << std::endl << "index: " << index << std::endl;
+    buffer[index] = file.layersQuantity;
+    index++; 
+
+    
+    buffergenerated = VTNCRW::read(buffer);
+    std::cout << std::endl << int(buffergenerated.layersQuantity) << std::endl;
+    
+    
+    return buffer;
 }
