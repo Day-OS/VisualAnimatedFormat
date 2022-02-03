@@ -105,13 +105,20 @@ std::vector<unsigned char> VTNCRW::write(VTNCFile file)
     {
         buffer[index] = _TAGNeeded[index];
     }
-    std::cout << std::endl << "index: " << index << std::endl;
     buffer[index] = file.layersQuantity;
     index++; 
+    tempindex = index;
+    std::cout << std::endl << "index: " << index << std::endl;
+    std::cout<< std::endl << "DIFFERENCE: " << index - tempindex;
+    for (; index < tempindex + file.layersQuantity; index++)
+    {
+        buffer[index] = file.Layers[index - tempindex].layerKey;
+    }
+    
 
     
-    buffergenerated = VTNCRW::read(buffer);
-    std::cout << std::endl << int(buffergenerated.layersQuantity) << std::endl;
+    //buffergenerated = VTNCRW::read(buffer);
+    //std::cout << std::endl << int(buffergenerated.layersQuantity) << std::endl;
     
     
     return buffer;

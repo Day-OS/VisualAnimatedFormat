@@ -16,10 +16,7 @@ struct RGB{
 struct layerrestruct{
 	vector2 resolution[layerquantity];
 };
-struct frame{
-	u8 RGBADR [LayerResolution.resolution[0].x * LayerResolution.resolution[0].y];
-	u16 Miliseconds;
-};
+
 
 #define CharQuantity 4
 char HEADER[CharQuantity] @0x00 [[color("FFFFFF")]];;
@@ -30,12 +27,19 @@ layerrestruct LayerResolution @$;
 u8 PixelQuantity @$;
 RGB PixelAddresses [PixelQuantity] @$;
 u8 FramesQuantity @$;
+
+struct frame{
+	u8 RGBADR [LayerResolution.resolution[0].x * LayerResolution.resolution[0].y];
+	u16 Miliseconds;
+};
+
 frame a[FramesQuantity] @$;
 
-std::print(LayerResolution.resolution[0].y);
+//std::print(LayerResolution.resolution[0].y);
 
 //std::print(LayerResolution[0]]);
 //frame a
 //RGB c [while(std::mem::read_unsigned($, 1) != 0xFF)] @0x11;
+
 
 
