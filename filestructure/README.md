@@ -5,11 +5,11 @@ This unfortunatelly is not working at the moment because it is at the process of
 
 Things that are planned:
 
-- [ ] Working Layers
-- [ ] Alpha color
+- [x] Working Layers
+- [x] Alpha color
 - [x] Frames
-- [x] Read
-- [x] Write
+- [ ] Read (Needs recoding)
+- [ ] Write (Needs recoding)
 
 ----------
 
