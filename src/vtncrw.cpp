@@ -3,12 +3,7 @@
 #include "vector"
 #include "string.h"
 
-
-
-VTNCRW::VTNCRW() 
-{
-    std::cout << GREEN << "VTNCRW Class CREATED." << RESET << std::endl;
-}
+VTNCRW::VTNCRW(){}
 
 void readChunk(std::vector<unsigned char> file, int &lastaddress, int bytesize, unsigned char *output, bool isString = false){
      
@@ -42,7 +37,6 @@ VTNCFile VTNCRW::read(std::vector<unsigned char> file)
 
     int blockOffset = 0;
 
-    
     readChunk(file, blockOffset, 5, TAG, true); if (memcmp(TAG, _TAGNeeded, 5) == 0) output.isFile = true;
     readChunk(file, blockOffset, 1, &output.layersQuantity);
     for (size_t i = 0; i < output.layersQuantity; i++){readChunk(file, blockOffset, 1, &layerKeys[i]);}
@@ -55,11 +49,12 @@ VTNCFile VTNCRW::read(std::vector<unsigned char> file)
     readChunk(file, blockOffset, 1, &output.colorsQuantity);
     for (size_t i = 0; i < output.colorsQuantity; i++){
         u8c address = 0;
-        RGB temp;
+        RGBA temp;
         readChunk(file, blockOffset, 1, &address);
         readChunk(file, blockOffset, 1, &temp.R);
         readChunk(file, blockOffset, 1, &temp.G);
         readChunk(file, blockOffset, 1, &temp.B);
+        readChunk(file, blockOffset, 1, &temp.A);
         output.Colors[address] = temp;
     }
     readChunk(file, blockOffset, 1, &output.framesQuantity);
@@ -68,58 +63,72 @@ VTNCFile VTNCRW::read(std::vector<unsigned char> file)
 
    
     
-    for (size_t layerindex = 0; layerindex < output.layersQuantity; layerindex++)
+    for (size_t layeri = 0; layeri < output.layersQuantity; layeri++)
     {
         Layer currentLayer;
-        for (size_t frameindex = 0; frameindex < output.framesQuantity; frameindex++)
+        for (size_t framei = 0; framei < output.framesQuantity; framei++)
         {
             Frame currentFrame;
-            for (size_t i = 0; i < output.layersResolution[layerindex].x * output.layersResolution[layerindex].y; i++)
+            for (size_t i = 0; i < output.layersResolution[layeri].x * output.layersResolution[layeri].y; i++)
             {
                 
                 readChunk(file, blockOffset, 1, &currentFrame.Pixels[i]);
             }
             
             readChunk16u(file,blockOffset,&currentFrame.msDuration);
-            currentLayer.framesArray[frameindex] = currentFrame;
-            currentLayer.layerKey = layerKeys[layerindex];
-            layers[layerindex] = currentLayer;
+            currentLayer.framesArray[framei] = currentFrame;
+            currentLayer.layerKey = layerKeys[layeri];
+            layers[layeri] = currentLayer;
         }
     }
     output.Layers = layers;
-    
     return output;
 }
 
 std::vector<unsigned char> VTNCRW::write(VTNCFile file) 
 {
-    //THIS CODE SUUUUUUUUUUUUUUUUUUUUUUCKS
-
-    std::vector<unsigned char> buffer = {0x00, 0x00, 0x00, 0x00, 0x00};
-    size_t index = 0;
-    size_t tempindex = 0;
+    std::vector<unsigned char> buffer;
     VTNCFile buffergenerated;
 
-    tempindex = index;
-    for (index = index; index < tempindex + 4; index++)
+    for (u8c i = 0; i < (sizeof(_TAGNeeded) - 1); i++)
     {
-        buffer[index] = _TAGNeeded[index];
+        buffer.push_back(_TAGNeeded[i]);
     }
-    buffer[index] = file.layersQuantity;
-    index++; 
-    tempindex = index;
-    std::cout << std::endl << "index: " << index << std::endl;
-    std::cout<< std::endl << "DIFFERENCE: " << index - tempindex;
-    for (; index < tempindex + file.layersQuantity; index++)
+    buffer.push_back(file.layersQuantity);
+    for (u8c i = 0; i < file.layersQuantity; i++)
     {
-        buffer[index] = file.Layers[index - tempindex].layerKey;
+        buffer.push_back(file.Layers[i].layerKey);
     }
-    
-
-    
-    //buffergenerated = VTNCRW::read(buffer);
-    //std::cout << std::endl << int(buffergenerated.layersQuantity) << std::endl;
-    
+    for (u8c i = 0; i < file.layersQuantity; i++)
+    {
+        buffer.push_back(file.layersResolution[i].x);
+        buffer.push_back((file.layersResolution[i].x<<8));
+        buffer.push_back(file.layersResolution[i].y);
+        buffer.push_back((file.layersResolution[i].y<<8));
+    }
+    buffer.push_back(file.colorsQuantity);
+    for (u8c i = 0; i < file.colorsQuantity; i++)
+    {
+        buffer.push_back(i);
+        buffer.push_back(file.Colors[i].R);
+        buffer.push_back(file.Colors[i].G);
+        buffer.push_back(file.Colors[i].B);
+        buffer.push_back(file.Colors[i].A);
+    }
+    buffer.push_back(file.framesQuantity);
+    for (u8c i_layer = 0; i_layer < file.layersQuantity; i_layer++)
+    {
+        for (u8c i_frame = 0; i_frame < file.framesQuantity; i_frame++)
+        {   
+            Frame currentframe = file.Layers[i_layer].framesArray[i_frame];
+            for (u8c i = 0; i < file.layersResolution[i_layer].x * file.layersResolution[i_layer].y; i++)
+            {
+                buffer.push_back(currentframe.Pixels[i]);   
+            }
+            buffer.push_back(currentframe.msDuration);
+            buffer.push_back(currentframe.msDuration << 8);
+        }
+    }
     
     return buffer;
 }
