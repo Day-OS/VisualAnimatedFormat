@@ -5,6 +5,39 @@
 
 VTNCRW::VTNCRW(){}
 
+VTNCFile VTNCRW::create(u8c layerQuantity, Resolution EachLayerResolution[], u8c ColorsQuantity, u8c EndsAnimationAt)
+{
+    VTNCFile file;
+    Layer layers[layerQuantity];
+    for (size_t i = 0; i < layerQuantity; i++)
+    {
+        file.layersResolution[i] = EachLayerResolution[i];
+        Frame framearray[255]; 
+        for (size_t frameindex = 0; frameindex < EndsAnimationAt; frameindex++)
+        {        
+            layers[i].framesArray[frameindex].msDuration = 100;
+            layers[i].framesArray[frameindex].Pixels[file.layersResolution[i].x * file.layersResolution[i].y] = 0;
+        }
+        
+        
+        layers[i].layerKey = 0;
+    }
+    for (size_t i = 0; i < ColorsQuantity; i++)
+    {
+        RGBA CurrentColor;
+        CurrentColor.R = CurrentColor.G = CurrentColor.B = 0;
+        CurrentColor.A = 0xFF; 
+        file.Colors[i] = CurrentColor;
+    }
+    
+    file.isFile = true;
+    file.framesQuantity = EndsAnimationAt;
+    file.colorsQuantity = ColorsQuantity;
+    file.layersQuantity = layerQuantity;
+    file.Layers = layers;
+    return file;
+}
+
 void readChunk(std::vector<unsigned char> file, int &lastaddress, int bytesize, unsigned char *output, bool isString = false){
      
     for (size_t i = 0; i < bytesize; i++)
