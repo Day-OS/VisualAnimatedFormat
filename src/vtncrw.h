@@ -49,6 +49,10 @@ private:
     u8c _TAGNeeded [5] = "VTNC";
 public:
     VTNCRW();
+    VTNCFile create(u8c layerQuantity, Resolution EachLayerResolution[], u8c ColorsQuantity, u8c EndsAnimationAt);
     VTNCFile read(std::vector<unsigned char> file);
     std::vector<unsigned char> write(VTNCFile file);
 };
+
+
+
