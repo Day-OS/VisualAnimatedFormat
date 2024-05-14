@@ -1,4 +1,4 @@
-# Visual Sequence File - Reader/Writer LIB
+# Visual Sequence Format - Reader/Writer LIB
 ## WORK IN PROGRESS
 Rust Library for a custom animated image file format that I created for my a fun "TV Head" cosplay project. It is also the project that I'm gonna be using for my undergraduate thesis.
 Yes, I know it is a strange name, it will probably be changed in the future.
@@ -36,35 +36,39 @@ File(
     is_animated: false,
     // If this is true, then a pixel will take 4 bytes instead of only 3 bytes.
     has_alpha_channel: true,
-    //In this case the amount of colors is SO small it only contains 1 pallete and 4 colors.
-    palettes_quantity: 0b00001
-    palettes: [
-        Palette{
-            //As there is only 4 different colours there's no need to spend more than 2 bits for each index.
-            //stored in a 5 bit space as this represent the quantity of bits in a 4 byte space (32).
-            //https://en.wikipedia.org/wiki/Color_depth
-            bit_depth: 0b00010// as there will always be a color, 0b0 must represent 1 instead of 0.
-            colors: [
-                Color{r: 0xFF, g: 0x00, b: 0x95, a: 0xFF},
-                Color{r: 0x00, g: 0xB9, b: 0xF2, a: 0xFF},
-                Color{r: 0xFA, g: 0xD5, b: 0x00, a: 0xFF},
-                Color{r: 0x00, g: 0x00, b: 0x00, a: 0x00}
-            ]
-        }
+    
+    //how many times the height and the width is divided. The size of the chunk.
+    //2 bytes
+    //can divide a screen by 4 times, resulting into 8 different chunk by row or column.
+    //Maximum capacity of chunks is: 64 chunks
+    chunks_x: 0b00,// 1 
+    chunks_y: 0b00,// 1
+    //In this case the image is SO small it only contains 1 chunk
+
+    //As there is only 4 different colours there's no need to spend more than 2 bits for each index.
+    //stored in a 5 bit space as this represent the quantity of bits in a 4 byte space (32).
+    //https://en.wikipedia.org/wiki/Color_depth
+    colors_quantity: 0b00010// as there will always be a color, 0b0 must represent 1 instead of 0.
+    pallete: [
+        Color{r: 0xFF, g: 0x00, b: 0x95, a: 0xFF},
+        Color{r: 0x00, g: 0xB9, b: 0xF2, a: 0xFF},
+        Color{r: 0xFA, g: 0xD5, b: 0x00, a: 0xFF},
+        Color{r: 0x00, g: 0x00, b: 0x00, a: 0x00}
     ]
-    frames:
-        Single_Frame{
-            //how many times the height and the width is divided. The size of the chunk.
-            chunk_subdivision: 1
-            //In this case the image is SO small it only contains 1 chunk.
+    is_animated: false,
+    frames:[
+        Frame{.
             chunks: [
                 Chunk{
+                  index: 0 // First chunk 1 byte
                   pallet_id : 0
                   pixels: [Hash(0b11), Hash(0b00), Hash(0b01), Hash(0b10),
                   LZSS(0100, 1101)]  //
                 }
             ],
-        }
+        },
+    ]
+ 
 )
 ```
 <img src="https://github.com/Day-OS/VTNCRW-LIB/blob/main/filestructure/onepixelheight.gif?raw=true" width="50%" style="image-rendering: pixelated;">
@@ -78,8 +82,6 @@ File(
     ...
     frames:[
         Frame{
-            
-            chunk_subdivision: 1
             chunks: [
                 Chunk{
                   pallet_id : 0
@@ -91,7 +93,6 @@ File(
             delay_frame_end: 100
         },
         Frame{
-            chunk_subdivision: 1
             chunks: [
                 Chunk{
                   pallet_id : 0
@@ -102,7 +103,6 @@ File(
             delay_frame_end: 100
         },
         Frame{
-            chunk_subdivision: 1
             chunks: [
                 Chunk{
                   pallet_id : 0
@@ -113,7 +113,6 @@ File(
             delay_frame_end: 100
         },
         Frame{
-            chunk_subdivision: 1
             chunks: [
                 Chunk{
                   pallet_id : 0
@@ -123,6 +122,8 @@ File(
             ],
             delay_frame_end: 100
         }
+        chunks_x: 1, //4 bytes
+        chunks_y: 1, //4 bytes
     ]
 )
 ```
@@ -287,5 +288,5 @@ Inspiration:
 - https://bitbeamcannon.com/nes-graphical-specs/
 - https://en.wikipedia.org/wiki/GIF
 - https://en.wikipedia.org/wiki/PNG
-- https://www.youtube.com/watch?v=EFUYNoFRHQI (How PNG Works: Compromising Speed for Quality)
+- https://youtu.be/EFUYNoFRHQI?t=1416 (How PNG Works: Compromising Speed for Quality)
 - https://en.wikipedia.org/wiki/QOI_(image_format)

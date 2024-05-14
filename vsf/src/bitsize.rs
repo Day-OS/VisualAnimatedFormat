@@ -1,9 +1,9 @@
 use bitvec::{array::BitArray, order::Msb0};
 
 
-pub trait BitQuantity: Clone + Copy{
+pub trait BitQuantity{
     #[allow(dead_code)]
-    fn get_bit_quantity(self) -> usize;
+    fn get_bit_quantity(&self) -> usize;
 }
 
 macro_rules! impl_bitQuantity {
@@ -13,7 +13,7 @@ macro_rules! impl_bitQuantity {
         pub struct $struct;
 
         impl BitQuantity for $struct {
-            fn get_bit_quantity(self) -> usize {
+            fn get_bit_quantity(&self) -> usize {
                 let value: usize = $size;
                 return value
             }
@@ -24,7 +24,7 @@ macro_rules! impl_bitQuantity {
 macro_rules! impl_bitQuantity_primitives {
     (for $($t:ty),+) => {
         $(impl BitQuantity for $t {
-            fn get_bit_quantity(self) -> usize {
+            fn get_bit_quantity(&self) -> usize {
                 std::mem::size_of::<$t>() * 8 
             }
         })*
@@ -61,8 +61,8 @@ impl<BitQuantity> BitSize<BitQuantity> where BitQuantity: self::BitQuantity {
         Self(value, bit_quantity)
     }
     #[allow(dead_code)]
-    pub fn to_byte(self) -> u8{
-        let bitarr = self.0;
+    pub fn to_byte(&self) -> u8{
+        let bitarr = &self.0;
         bitarr.data
     }
 }
