@@ -1,31 +1,31 @@
+use std::fmt::Debug;
+
 use bitvec::{array::BitArray, order::Msb0};
 
-
-pub trait BitQuantity{
+pub trait BitQuantity : Debug {
     #[allow(dead_code)]
     fn get_bit_quantity(&self) -> usize;
 }
 
 macro_rules! impl_bitQuantity {
     ($struct:ident, $size:expr) => {
-
         #[derive(Debug, Clone, Copy)]
         pub struct $struct;
 
         impl BitQuantity for $struct {
             fn get_bit_quantity(&self) -> usize {
                 let value: usize = $size;
-                return value
+                return value;
             }
         }
-    }
+    };
 }
 
 macro_rules! impl_bitQuantity_primitives {
     (for $($t:ty),+) => {
         $(impl BitQuantity for $t {
             fn get_bit_quantity(&self) -> usize {
-                std::mem::size_of::<$t>() * 8 
+                std::mem::size_of::<$t>() * 8
             }
         })*
     }
@@ -41,28 +41,37 @@ impl_bitQuantity!(BitQ6, 6);
 impl_bitQuantity!(BitQ7, 7);
 impl_bitQuantity!(BitQ8, 8);
 
-
 #[allow(dead_code)]
-pub struct BitSize<Q>(BitArray<u8, Msb0>, Q) where Q: BitQuantity;
+#[derive(Debug)]
+pub struct BitSize<Q>(pub BitArray<u8, Msb0>, pub Q)
+where
+    Q: BitQuantity;
 
-
-impl<BitQuantity> BitSize<BitQuantity> where BitQuantity: self::BitQuantity {
+impl<BitQuantity> BitSize<BitQuantity>
+where
+    BitQuantity: self::BitQuantity,
+{
     #[allow(dead_code)]
-    pub fn new(value: u8, bit_quantity: BitQuantity ) -> Self {
-        //let value: &BitSlice<u8, Msb0> = BitSlice::<u8, Msb0>::from_element(&value);
+    pub fn new(value: u8, bit_quantity: BitQuantity) -> Self {
         let mut value = BitArray::<u8, Msb0>::new(value);
         let quantity: usize = bit_quantity.get_bit_quantity();
-        for i in (1..=8 as usize).rev(){
-            if i > quantity {
-                value.set(8 - i, false);
-                
-            }
-            else{ break; }        }
+        value.shift_left(8-quantity);
+
         Self(value, bit_quantity)
     }
     #[allow(dead_code)]
-    pub fn to_byte(&self) -> u8{
-        let bitarr = &self.0;
+    pub fn to_byte(&mut self) -> u8 {
+        let bitarr = self.0;
+        let quantity: usize = self.1.get_bit_quantity();
+        self.0.shift_right(8-quantity);
         bitarr.data
+    }
+}
+impl<Bq> BitQuantity for BitSize<Bq>
+where
+    Bq: self::BitQuantity,
+{
+    fn get_bit_quantity(&self) -> usize {
+        self.1.get_bit_quantity()
     }
 }
