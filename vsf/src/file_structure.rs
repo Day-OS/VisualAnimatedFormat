@@ -19,6 +19,7 @@ pub enum OperationTypes {
     },
 }
 
+
 impl OperationTypes {
     pub(crate) fn to_number(&self) -> u8 {
         match self {
@@ -44,10 +45,10 @@ pub struct FileStructure {
     pub width: u16,
     pub height: u16,
     pub has_alpha_channel: bool,
-    pub chunks_x: BitSize<BitQ4>,
-    pub chunks_y: BitSize<BitQ4>,
+    pub chunks_x: BitSize<BitQ2>,
+    pub chunks_y: BitSize<BitQ2>,
     pub colors_quantity: BitSize<BitQ5>,
-    pub pallete: Vec<Color>,
+    pub palette: Vec<Color>,
     pub frames: Vec<Frame>,
 }
 
@@ -85,7 +86,7 @@ impl FileStructure {
         //assert_a!(chunks_x);
         //assert_a!(chunks_y);
         //assert_a!(colors_quantity);
-        assert_a!(pallete);
+        assert_a!(palette);
         //assert_a!(frames);
         //assert_a!(colors_quantity);
     }

@@ -1,3 +1,5 @@
+use std::io::Bytes;
+
 use bitvec::{array::BitArray, order::Msb0};
 
 use crate::bitsize::{BitQ8, BitQuantity, BitSize};
@@ -11,8 +13,18 @@ impl Buffer {
         _vec.iter().map(|bitarr| bitarr.data).collect()
     }
 
+
+    pub fn append_bytes(&mut self, mut bytes: Vec<u8>){
+        for byte in bytes {
+            let bit_size = BitSize::new(byte, BitQ8);
+            self.append_bitsize(bit_size);
+        }
+
+    }
+
+
     pub fn append_string(&mut self, mut string: String){
-        let mut bytes = string.as_bytes();
+        let bytes = string.as_bytes();
 
         for byte in bytes {
             let bit_size = BitSize::new(*byte, BitQ8);
@@ -23,7 +35,7 @@ impl Buffer {
     
     pub fn append_bitsize<Q>(&mut self, bit_size: BitSize<Q>) where  Q: BitQuantity{
         let quantity = bit_size.1.get_bit_quantity();
-        let mut vec = &mut self.0;
+        let vec = &mut self.0;
         let head = &mut self.1;
         if quantity > 8 {
            return; 

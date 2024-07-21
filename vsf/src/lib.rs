@@ -76,11 +76,11 @@ mod tests {
         let file: FileStructure = FileStructure {
             width: 21,
             height: 1,
-            has_alpha_channel: false,
-            chunks_x: BitSize(BitArray::new(0), BitQ4),
-            chunks_y: BitSize(BitArray::new(0), BitQ4),
+            has_alpha_channel: true,
+            chunks_x: BitSize(BitArray::new(0), BitQ2),
+            chunks_y: BitSize(BitArray::new(0), BitQ2),
             colors_quantity: BitSize(BitArray::new(4), BitQ5),
-            pallete: vec![
+            palette: vec![
                 Color {
                     r: 0xFF,
                     g: 0x00,
