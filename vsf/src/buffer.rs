@@ -1,5 +1,3 @@
-use std::io::Bytes;
-
 use bitvec::{array::BitArray, order::Msb0};
 
 use crate::bitsize::{BitQ8, BitQuantity, BitSize};
@@ -14,20 +12,20 @@ impl Buffer {
     }
 
 
-    pub fn append_bytes(&mut self, mut bytes: Vec<u8>){
+    pub fn append_bytes(&mut self, bytes: Vec<u8>){
         for byte in bytes {
-            let bit_size = BitSize::new(byte, BitQ8);
+            let bit_size = BitSize::new(byte.into(), BitQ8);
             self.append_bitsize(bit_size);
         }
 
     }
 
 
-    pub fn append_string(&mut self, mut string: String){
+    pub fn append_string(&mut self, string: String){
         let bytes = string.as_bytes();
 
         for byte in bytes {
-            let bit_size = BitSize::new(*byte, BitQ8);
+            let bit_size = BitSize::new((*byte).into(), BitQ8);
             self.append_bitsize(bit_size);
         }
 
@@ -46,16 +44,20 @@ impl Buffer {
         }
 
         let mut last_byte_index = vec.len() - 1;
-        for i in 0..quantity {
+        for i in (0..quantity) {
             // if head skips 8 bits
             if *head >= 8 {
                 *head = 0;
                 last_byte_index += 1;
                 vec.push(BitArray::new(0));
             }
-            let bit = *bit_size.0.get(i).unwrap(); //This unwrapping is temporary
+            
+            let byte = bit_size.0.get(i/8).unwrap();
 
-            vec[last_byte_index].set((*head).into(), bit);
+            let bit = byte.get(i%8).unwrap(); //This unwrapping is temporary
+            println!("{byte:#?} {bit} {}", (i%8));
+
+            vec[last_byte_index].set((*head).into(), *bit);
             *head += 1;
         }
     }

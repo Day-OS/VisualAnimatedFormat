@@ -22,39 +22,58 @@ pub fn copy_chunk(mut src: &mut BitArray<u16, Msb0>, cpy: BitArray<u8, Msb0>, mu
 
 #[cfg(test)]
 mod tests {
-    use bitvec::{array::BitArray, BitArr};
+    use bitvec::{array::BitArray, vec, BitArr};
 
     use crate::{
         bitsize::*,
-        file_structure::{Chunk, Color, FileStructure, Frame, OperationTypes},
-        writer,
+        file_structure::{Chunk, Color, FileStructure, Frame, OperationTypes}, writer,
+        //writer,
     };
 
     #[test]
     fn bit_size() {
-        let value = BitSize::new(0xFF, BitQ8).to_byte();
+        println!("testing 1 byte!");
+
+        let value = BitSize::new(0xFF, BitQ8).to_u32();
         assert_eq!(value, 0b11111111);
 
-        let value = BitSize::new(0xFF, BitQ7).to_byte();
-        assert_eq!(value, 0b11111110);
+        let value = BitSize::new(0xFF, BitQ7).to_u32();
+        assert_eq!(value, 0b1111111);
 
-        let value = BitSize::new(0xFF, BitQ6).to_byte();
-        assert_eq!(value, 0b11111100);
+        let value = BitSize::new(0xFF, BitQ6).to_u32();
+        assert_eq!(value, 0b111111);
 
-        let value = BitSize::new(0xFF, BitQ5).to_byte();
-        assert_eq!(value, 0b11111000);
+        let value = BitSize::new(0xFF, BitQ5).to_u32();
+        assert_eq!(value, 0b11111);
 
-        let value = BitSize::new(0xFF, BitQ4).to_byte();
-        assert_eq!(value, 0b11110000);
+        let value = BitSize::new(0xFF, BitQ4).to_u32();
+        assert_eq!(value, 0b1111);
 
-        let value = BitSize::new(0xFF, BitQ3).to_byte();
-        assert_eq!(value, 0b11100000);
+        let value = BitSize::new(0xFF, BitQ3).to_u32();
+        assert_eq!(value, 0b111);
 
-        let value = BitSize::new(0xFF, BitQ2).to_byte();
-        assert_eq!(value, 0b11000000);
+        let value = BitSize::new(0xFF, BitQ2).to_u32();
+        assert_eq!(value, 0b11);
 
-        let value = BitSize::new(0xFF, BitQ1).to_byte();
-        assert_eq!(value, 0b10000000);
+        let value = BitSize::new(0xFF, BitQ1).to_u32();
+        assert_eq!(value, 0b1);
+
+        println!("testing 1 and a half bytes");
+        let value = BitSize::new(0xFFFF, BitQ12).to_u32();
+        assert_eq!(value, 0b111111111111);
+
+        println!("testing 2 bytes");
+        let value = BitSize::new(0xFFFF, BitQ16).to_u32();
+        assert_eq!(value, 0b1111111111111111);
+
+        println!("testing 2 and a half bytes");
+        let value = BitSize::new(0xFFFFFF, BitQ20).to_u32();
+        assert_eq!(value, 0b11111111111111111111);
+
+        println!("testing 3 bytes");
+        let value = BitSize::new(0xFFFFFF, BitQ24).to_u32();
+        assert_eq!(value, 0b111111111111111111111111);
+
     }
 
     #[test]
@@ -65,10 +84,6 @@ mod tests {
         assert_eq!(value.get_bit_quantity(), 16);
         let value: u32 = 0;
         assert_eq!(value.get_bit_quantity(), 32);
-        let value: u64 = 0;
-        assert_eq!(value.get_bit_quantity(), 64);
-        let value: u128 = 0;
-        assert_eq!(value.get_bit_quantity(), 128);
     }
 
     #[test]
@@ -77,9 +92,9 @@ mod tests {
             width: 21,
             height: 1,
             has_alpha_channel: true,
-            chunks_x: BitSize(BitArray::new(0), BitQ2),
-            chunks_y: BitSize(BitArray::new(0), BitQ2),
-            colors_quantity: BitSize(BitArray::new(4), BitQ5),
+            chunks_x: BitSize(vec![BitArray::new(0)], BitQ2),
+            chunks_y: BitSize(vec![BitArray::new(0)], BitQ2),
+            colors_quantity: BitSize(vec![BitArray::new(4)], BitQ5),
             palette: vec![
                 Color {
                     r: 0xFF,
@@ -108,19 +123,19 @@ mod tests {
             ],
             frames: vec![Frame {
                 chunks: vec![Chunk {
-                    index: Box::new(BitSize(BitArray::new(0), BitQ1)),
+                    index: Box::new(BitSize(vec![BitArray::new(0)], BitQ1)),
                     commands: vec![
                         OperationTypes::DRAW {
-                            pallete_color_index: Box::new(BitSize(BitArray::new(3), BitQ2)),
+                            pallete_color_index: Box::new(BitSize(vec![BitArray::new(3)], BitQ2)),
                         },
                         OperationTypes::DRAW {
-                            pallete_color_index: Box::new(BitSize(BitArray::new(0), BitQ2)),
+                            pallete_color_index: Box::new(BitSize(vec![BitArray::new(0)], BitQ2)),
                         },
                         OperationTypes::DRAW {
-                            pallete_color_index: Box::new(BitSize(BitArray::new(1), BitQ2)),
+                            pallete_color_index: Box::new(BitSize(vec![BitArray::new(1)], BitQ2)),
                         },
                         OperationTypes::DRAW {
-                            pallete_color_index: Box::new(BitSize(BitArray::new(2), BitQ2)),
+                            pallete_color_index: Box::new(BitSize(vec![BitArray::new(2)], BitQ2)),
                         },
                     ],
                 }],

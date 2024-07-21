@@ -62,11 +62,11 @@ pub fn write(file: file_structure::FileStructure) -> Result<Buffer, WriteError> 
         buffer.append_bitsize(BitSize::new(1, BitQ1));
         
         //Actual color:
-        buffer.append_bitsize(BitSize::new(color.r, BitQ8));
-        buffer.append_bitsize(BitSize::new(color.g, BitQ8));
-        buffer.append_bitsize(BitSize::new(color.b, BitQ8));
+        buffer.append_bitsize(BitSize::new(color.r.into(), BitQ8));
+        buffer.append_bitsize(BitSize::new(color.g.into(), BitQ8));
+        buffer.append_bitsize(BitSize::new(color.b.into(), BitQ8));
         if file.has_alpha_channel {
-            buffer.append_bitsize(BitSize::new(color.a.unwrap_or(0), BitQ8));
+            buffer.append_bitsize(BitSize::new(color.a.unwrap_or(0).into(), BitQ8));
         }
     }
     // Representing there's no color left to be added from the palette
