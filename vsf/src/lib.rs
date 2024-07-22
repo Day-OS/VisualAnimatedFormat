@@ -3,30 +3,18 @@ mod buffer;
 mod errors;
 mod file_structure;
 mod writer;
+mod reader;
 
-use bitvec::{array::BitArray, order::Msb0};
+const HEADER: &str = "VAF";
 
-pub fn add(left: usize, right: usize) -> usize {
-    left + right
-}
 
-pub fn copy_chunk(mut src: &mut BitArray<u16, Msb0>, cpy: BitArray<u8, Msb0>, mut index: usize) {
-    for bit in cpy {
-        if src.len() < index {
-            return;
-        }
-        src.set(index, bit);
-        index += 1;
-    }
-}
 
 #[cfg(test)]
 mod tests {
-    use bitvec::{array::BitArray, vec, BitArr};
+    use bitvec::array::BitArray;
 
     use crate::{
-        bitsize::*,
-        file_structure::{Chunk, Color, FileStructure, Frame, OperationTypes}, writer,
+        bitsize::*, file_structure::{Chunk, Color, FileStructure, Frame, OperationTypes}, reader, writer
         //writer,
     };
 
@@ -87,14 +75,13 @@ mod tests {
     }
 
     #[test]
-    fn write_file() {
+    fn write_and_verify_file() {
         let file: FileStructure = FileStructure {
             width: 21,
             height: 1,
             has_alpha_channel: true,
             chunks_x: BitSize(vec![BitArray::new(0)], BitQ2),
             chunks_y: BitSize(vec![BitArray::new(0)], BitQ2),
-            colors_quantity: BitSize(vec![BitArray::new(4)], BitQ5),
             palette: vec![
                 Color {
                     r: 0xFF,
@@ -141,7 +128,13 @@ mod tests {
                 }],
             }],
         };
-        let result = writer::write(file).unwrap().to_byte_vec();
-        println!("{result:x?}");
+        let result = writer::write(file).unwrap();
+        println!("byte head: {:?} | bit head: {:?}", result.byte_head, result.bit_head);
+
+        println!("{:x?}", result.to_byte_vec());
+        
+        let read_file = reader::read(result.to_byte_vec());
+        println!("{read_file:?}")
+
     }
 }

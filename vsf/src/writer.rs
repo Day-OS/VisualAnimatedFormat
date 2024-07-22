@@ -1,33 +1,25 @@
-use std::io::Read;
-use std::str::Bytes;
-
-use bitvec::array::BitArray;
-use bitvec::order::Msb0;
-
-use crate::bitsize::{BitQ1, BitQ8, BitSize};
-use crate::buffer;
+use crate::bitsize::{BitQ1, BitQ16, BitQ8, BitSize};
 use crate::buffer::Buffer;
 use crate::errors::WriteError;
-use crate::file_structure;
+use crate::{file_structure, HEADER};
 
-fn push_bytes(buffer: &mut Buffer, bytes: Bytes){
-    for byte in bytes {
-        buffer.0.push(BitArray::new(byte));
-    }
-}
 
 pub fn write(file: file_structure::FileStructure) -> Result<Buffer, WriteError> {
-    let mut buffer = Buffer(vec![], 0);
-    let header = "VSF".to_string();
+    let mut buffer = Buffer{
+        body: vec![],
+        bit_head: 0,
+        byte_head: 0
+    };
 
     //Adds Header
-    buffer.append_string(header);
-    
+    buffer.append_chars(HEADER.as_bytes().to_vec());
+
+
     //Adds Width
-    buffer.append_bytes(file.width.to_be_bytes().to_vec());
+    buffer.append_bitsize(BitSize::new(file.width.into(), BitQ16));
 
     //Adds Height
-    buffer.append_bytes(file.height.to_be_bytes().to_vec());
+    buffer.append_bitsize(BitSize::new(file.height.into(), BitQ16));
 
 
     // Sets Animated Tag
@@ -50,10 +42,9 @@ pub fn write(file: file_structure::FileStructure) -> Result<Buffer, WriteError> 
     buffer.append_bitsize(BitSize::new(has_alpha_channel, BitQ1));
 
     //FOR THE SAKE OF READABILITY WE IGNORE THE REST OF THE ZEROS UNTIL IT REACHES THE NEXT BYTE
-    buffer.1 = 8;
+    buffer.bit_head = 8;
 
     // How many divisions theres on each axis 1 subdivison = 2 chunks in that axis. 3 divisions are 6 chunks in that axis.
-    
     buffer.append_bitsize(file.chunks_x);
     buffer.append_bitsize(file.chunks_y);
 

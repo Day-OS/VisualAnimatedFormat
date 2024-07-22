@@ -1,4 +1,4 @@
-# Visual Sequence Format - Reader/Writer LIB
+# Visual Animated Format - Reader/Writer LIB
 ## WORK IN PROGRESS
 Rust Library for a custom animated image file format that I created for my a fun "TV Head" cosplay project. It is also the project that I'm gonna be using for my undergraduate thesis.
 Yes, I know it is a strange name, it will probably be changed in the future.
@@ -29,7 +29,7 @@ Yes, I know it is a strange name, it will probably be changed in the future.
 //HASH(Index) //THIS NEEDS a way to put them in an array in a fastest way!!!
 
 File(
-    header: "VSF"
+    header: "VAF"
     width: 0x0015,
     height: 0x0001,
      // If this is true then "frames" will be an array of struct Frame, when its not it will have just one element.
@@ -141,7 +141,7 @@ File(
     <tbody>
         <tr>
             <td>3</td>
-            <td>56 53 46 (ASCII for VSF)</td>
+            <td>56 41 46 (ASCII for VAF)</td>
             <td>Header</td>
         </tr>
         <tr>
@@ -209,7 +209,7 @@ File(
     <tbody>
         <tr>
             <td>3</td>
-            <td>56 53 46 (ASCII for VSF)</td>
+            <td>56 41 46 (ASCII for VAF)</td>
             <td>Header</td>
         </tr>
         <tr>

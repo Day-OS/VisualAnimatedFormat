@@ -1,5 +1,6 @@
-use crate::bitsize::{self, BitQ1, BitQ2, BitQ4, BitQ5, BitQ6, BitQuantity, BitSize};
+use crate::bitsize::{BitQ2, BitQ4, BitQ5, BitQ6, BitQuantity, BitSize};
 
+#[derive(Debug)]
 pub enum OperationTypes {
     DRAW {
         pallete_color_index: Box<dyn BitQuantity>,
@@ -40,6 +41,7 @@ enum DrawOperationTypes {
 
 pub(crate) const HEADER: &str = "VSF";
 
+#[derive(Debug)]
 pub struct FileStructure {
     //pub header: String,
     pub width: u16,
@@ -47,12 +49,11 @@ pub struct FileStructure {
     pub has_alpha_channel: bool,
     pub chunks_x: BitSize<BitQ2>,
     pub chunks_y: BitSize<BitQ2>,
-    pub colors_quantity: BitSize<BitQ5>,
     pub palette: Vec<Color>,
     pub frames: Vec<Frame>,
 }
 
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Debug)]
 
 pub struct Color {
     pub r: u8,
@@ -61,10 +62,12 @@ pub struct Color {
     pub a: Option<u8>,
 }
 
+#[derive(Debug)]
 pub struct Frame {
     pub chunks: Vec<Chunk>,
 }
 
+#[derive(Debug)]
 pub struct Chunk {
     pub index: Box<dyn BitQuantity>,
     pub commands: Vec<OperationTypes>,
