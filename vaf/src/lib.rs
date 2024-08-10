@@ -76,53 +76,57 @@ mod tests {
 
     #[test]
     fn write_and_verify_file() {
+        let palette = vec![
+            Color {
+                r: 0xFF,
+                g: 0x00,
+                b: 0x95,
+                a: Some(0xFF),
+            },
+            Color {
+                r: 0x00,
+                g: 0xB9,
+                b: 0xF2,
+                a: Some(0xFF),
+            },
+            Color {
+                r: 0xFA,
+                g: 0xD5,
+                b: 0x00,
+                a: Some(0xFF),
+            },
+            Color {
+                r: 0x00,
+                g: 0x00,
+                b: 0x00,
+                a: Some(0x00),
+            },
+        ];
+        let palette_draw_index_size = f32::log2(palette.len() as f32).ceil() as usize;
+        let palette_draw_index_size = BitQDyn::get_from_quantity(palette_draw_index_size).unwrap();
         let file: FileStructure = FileStructure {
+            metadata: "Hello World!".to_string(),
             width: 21,
             height: 1,
             has_alpha_channel: true,
             chunks_x: BitSize(vec![BitArray::new(0)], BitQ2),
             chunks_y: BitSize(vec![BitArray::new(0)], BitQ2),
-            palette: vec![
-                Color {
-                    r: 0xFF,
-                    g: 0x00,
-                    b: 0x95,
-                    a: Some(0xFF),
-                },
-                Color {
-                    r: 0x00,
-                    g: 0xB9,
-                    b: 0xF2,
-                    a: Some(0xFF),
-                },
-                Color {
-                    r: 0xFA,
-                    g: 0xD5,
-                    b: 0x00,
-                    a: Some(0xFF),
-                },
-                Color {
-                    r: 0x00,
-                    g: 0x00,
-                    b: 0x00,
-                    a: Some(0x00),
-                },
-            ],
+            palette,
             frames: vec![Frame {
                 chunks: vec![Chunk {
-                    index: Box::new(BitSize(vec![BitArray::new(0)], BitQ1)),
+                    index: BitSize(vec![BitArray::new(0)], BitQDyn::BitQ1),
                     commands: vec![
                         OperationTypes::DRAW {
-                            pallete_color_index: Box::new(BitSize(vec![BitArray::new(3)], BitQ2)),
+                            palette_color_index: BitSize(vec![BitArray::new(3)], palette_draw_index_size.clone()),
                         },
                         OperationTypes::DRAW {
-                            pallete_color_index: Box::new(BitSize(vec![BitArray::new(0)], BitQ2)),
+                            palette_color_index: BitSize(vec![BitArray::new(0)], palette_draw_index_size.clone()),
                         },
                         OperationTypes::DRAW {
-                            pallete_color_index: Box::new(BitSize(vec![BitArray::new(1)], BitQ2)),
+                            palette_color_index: BitSize(vec![BitArray::new(1)], palette_draw_index_size.clone()),
                         },
                         OperationTypes::DRAW {
-                            pallete_color_index: Box::new(BitSize(vec![BitArray::new(2)], BitQ2)),
+                            palette_color_index: BitSize(vec![BitArray::new(2)], palette_draw_index_size),
                         },
                     ],
                 }],

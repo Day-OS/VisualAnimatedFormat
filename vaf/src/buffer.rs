@@ -8,13 +8,19 @@ use crate::{bitsize::{BitQ1, BitQ16, BitQ8, BitQuantity, BitSize}, errors::Buffe
 pub struct Buffer{
     pub body: Vec<BitArray<u8, Msb0>>, 
     pub bit_head: u8,
-    pub byte_head: u8
+    pub byte_head: u32
 }
 
 impl Buffer {
     pub fn to_byte_vec(&self) -> Vec<u8> {
         let _vec = self.body.clone();
         _vec.iter().map(|bitarr| bitarr.data).collect()
+    }
+
+    pub fn append_string(&mut self, string: String){
+        let mut chars = string.as_bytes().to_vec();
+        chars.push(0);
+        self.append_chars(chars)
     }
 
     pub fn append_chars(&mut self, chars: Vec<u8>){
@@ -83,12 +89,24 @@ impl Buffer {
         Ok(bit_size)
     }
 
-    pub fn read_chars(&mut self, size: usize) -> Result<String, BufferError>{
+
+    pub fn read_string(&mut self) -> Result<String, BufferError>{
+        let mut string = self.read_chars(None)?;
+        string = string[0..string.len() - 1].to_string();
+        Ok(string)
+    }
+
+    /// Size defines if the reading is going to happen between a fixed ammount of time or when it reaches a \0
+    pub fn read_chars(&mut self, size: Option<usize>) -> Result<String, BufferError>{
         let mut vec = vec![];
-        for _ in 0..size {
+        
+        for _ in 0..size.unwrap_or(((self.body.len() as u32) - self.byte_head) as usize) {
             let byte = self.read_bits(BitQ8)?;
             let byte = byte.0.get(0).ok_or(BufferError::IndexOutOfBound)?;
             vec.push(byte.data);
+            if byte.data == 0 {
+                break;
+            }
         }
         Ok(String::from_utf8(vec).map_err(|_| BufferError::StringConversionFailed)?)
     }

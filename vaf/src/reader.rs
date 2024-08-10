@@ -18,10 +18,16 @@ pub fn read(file: Vec<u8>) -> Result<FileStructure, ReadError> {
         byte_head: 0
     };
 
-    let header = buffer.read_chars(HEADER.len())?;
+    let header = buffer.read_chars(Some(HEADER.len()))?;
     if header != HEADER {
         return Err(ReadError::IncorrectFormat)
     }
+
+    let metadata = buffer.read_string()?;
+
+    println!("{metadata:?}");
+
+
 
     let width = buffer.read_u16()?;
     let heigth = buffer.read_u16()?;

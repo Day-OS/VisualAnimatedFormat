@@ -14,6 +14,7 @@ pub fn write(file: file_structure::FileStructure) -> Result<Buffer, WriteError> 
     //Adds Header
     buffer.append_chars(HEADER.as_bytes().to_vec());
 
+    buffer.append_string(file.metadata);
 
     //Adds Width
     buffer.append_bitsize(BitSize::new(file.width.into(), BitQ16));
@@ -67,7 +68,6 @@ pub fn write(file: file_structure::FileStructure) -> Result<Buffer, WriteError> 
 
     for frame in file.frames {
         for chunk in frame.chunks {
-            
             for operations in chunk.commands {
                 
             }

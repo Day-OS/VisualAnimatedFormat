@@ -30,8 +30,44 @@ macro_rules! impl_bitQuantityList {
         $(
             impl_bitQuantity!($size);
         )*
+
+        paste!{
+            #[derive(Debug, Clone)]
+            pub enum BitQDyn{
+                $(
+                    [<BitQ $size>],
+                )*
+            }
+            impl BitQDyn{
+                pub fn get_from_quantity(quantity: usize) -> Option<Self>{
+                    match quantity{
+                        $(
+                            $size => Some(Self::[<BitQ $size>]),
+                        )*
+                        _ => None
+                    }
+                }
+
+                pub fn get_from_trait(quantity: Box<dyn BitQuantity>) -> Option<Self>{
+                    Self::get_from_quantity(quantity.get_bit_quantity())
+                }
+            }
+
+            impl BitQuantity for BitQDyn{
+                fn get_bit_quantity(&self) -> usize{
+                    match self{
+                        $(
+                            Self::[<BitQ $size>] => $size,
+                        )*
+                    }
+                
+                }
+            }
+        }
+
     };
 }
+
 
 macro_rules! impl_bitQuantity_primitives {
     (for $($t:ty),+) => {
@@ -44,9 +80,7 @@ macro_rules! impl_bitQuantity_primitives {
 }
 
 impl_bitQuantity_primitives!(for u8, u16, u32);
-impl_bitQuantityList!(1,2,3,4,5,6,7,8);
-impl_bitQuantityList!(9,10,11,12,13,14,15,16);
-impl_bitQuantityList!(17,18,19,20,21,22,23,24);
+impl_bitQuantityList!(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24);
 
 #[allow(dead_code)]
 #[derive(Debug)]
