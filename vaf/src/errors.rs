@@ -1,4 +1,7 @@
+use bitvec::{array::BitArray, order::Msb0};
 use thiserror::Error;
+
+use crate::bitsize::{BitQuantity, BitSize};
 
 #[derive(Error, Debug)]
 pub enum WriteError {
@@ -6,7 +9,7 @@ pub enum WriteError {
     NoFramesFound,
 
     #[error("Buffer Error")]
-    BufferError(#[from] BufferError)
+    BufferError(#[from] BufferError),
 }
 
 #[derive(Error, Debug)]
@@ -20,15 +23,42 @@ pub enum ReadError {
     #[error("invalid")]
     Invalid,
 
-    #[error("Buffer Error")]
-    BufferError(#[from] BufferError)
+    #[error(transparent)]
+    BufferError(#[from] BufferError),
 }
-
 
 #[derive(Error, Debug)]
 pub enum BufferError {
-    #[error("Item in defined index does not exist")]
-    IndexOutOfBound,
+    #[error(transparent)]
+    BitSizeError(#[from] BitSizeError),
+    #[error("Byte at {index} goes out of buffer's bounderies")]
+    BufferIndexOutOfBound { index: usize },
     #[error("Data could not be converted into String")]
     StringConversionFailed,
+}
+
+#[derive(Error, Debug)]
+pub enum BitSizeError {
+    #[error("Data: {data:x?} | Byte at {index} index does not exist")]
+    ByteIndexOutOfBound { data: Vec<u8>, index: usize },
+    #[error("Data: {data:x?} | Bit at {index} index does not exist")]
+    BitIndexOutOfBound { data: u8, index: u8 },
+}
+
+impl BitSizeError {
+    pub fn throw_byte_index_out_of_bound<Q: BitQuantity>(
+        data: BitSize<Q>,
+        index: usize,
+    ) -> BitSizeError {
+        BitSizeError::ByteIndexOutOfBound {
+            data: data.clone().to_bytes(),
+            index: index,
+        }
+    }
+    pub fn throw_bit_index_out_of_bound(data: BitArray<u8, Msb0>, index: usize) -> BitSizeError {
+        BitSizeError::BitIndexOutOfBound {
+            data: data.data,
+            index: index as u8,
+        }
+    }
 }

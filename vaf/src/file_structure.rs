@@ -20,7 +20,6 @@ pub enum OperationTypes {
     },
 }
 
-
 impl OperationTypes {
     pub(crate) fn to_number(&self) -> u8 {
         match self {
@@ -48,15 +47,15 @@ pub struct FileStructure {
     pub height: u16,
     pub has_alpha_channel: bool,
     pub subdivision: ChunkSubdivision,
-    
+
     pub palette: Vec<Color>,
     pub frames: Vec<Frame>,
 }
 
 /// Chunk Subdivisions are a way to declare how much divisions are made and in which axis they are divided
-/// 
+///
 /// ```
-///x:0 y:1 x:1 y:0  x:0 y:1 
+///x:0 y:1 x:1 y:0  x:0 y:1
 ///┌─────┐ ┌──┬──┐ ┌───────┐
 ///│     │ │  │  │ │       │
 ///│     │ │  │  │ │       │
@@ -74,14 +73,14 @@ pub struct FileStructure {
 ///└──┴──┘ └─────┘ └┴┴┴┴┴┴┴┘
 /// ```
 #[derive(Debug)]
-pub struct ChunkSubdivision{
+pub struct ChunkSubdivision {
     pub x: BitSize<BitQ2>,
-    pub y: BitSize<BitQ2>
+    pub y: BitSize<BitQ2>,
 }
 
-impl ChunkSubdivision{
+impl ChunkSubdivision {
     /// This returns how many chunks will be present in this chunk subdivision setup
-    pub fn get_subdivision_quantity(self) -> u8{
+    pub fn get_subdivision_quantity(self) -> u8 {
         let chunkx = self.x.to_byte() + 1;
         let chunky = self.y.to_byte() + 1;
         // the need to convert u8 to u32 is pretty weird...

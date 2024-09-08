@@ -6,32 +6,29 @@ use crate::errors::{ReadError, WriteError};
 use crate::file_structure::{self, Color, FileStructure};
 use crate::HEADER;
 
-
 pub fn read(file: Vec<u8>) -> Result<FileStructure, ReadError> {
-    
-    let data = file.iter().map(|byte|{
-        BitArray::new(byte.clone())
-    }).collect();
-    let mut buffer = Buffer{
+    let data = file
+        .iter()
+        .map(|byte| BitArray::new(byte.clone()))
+        .collect();
+    let mut buffer = Buffer {
         body: data,
         bit_head: 0,
-        byte_head: 0
+        byte_head: 0,
     };
 
     let header = buffer.read_chars(Some(HEADER.len()))?;
     if header != HEADER {
-        return Err(ReadError::IncorrectFormat)
+        return Err(ReadError::IncorrectFormat);
     }
 
     let metadata = buffer.read_string()?;
 
     println!("{metadata:?}");
 
-
-
     let width = buffer.read_u16()?;
     let heigth = buffer.read_u16()?;
-    
+
     let mut is_animated = buffer.read_bool()?;
     let mut has_alpha_channel = buffer.read_bool()?;
 
@@ -50,13 +47,12 @@ pub fn read(file: Vec<u8>) -> Result<FileStructure, ReadError> {
         let b = buffer.read_u8()?;
         let a = if has_alpha_channel {
             Some(buffer.read_u8()?)
-        }else{
+        } else {
             None
         };
-        palette.push(Color{r,g,b,a});
+        palette.push(Color { r, g, b, a });
     }
     println!("{palette:?}");
-
 
     Err(ReadError::Invalid) // remove LATER!!!!
 }

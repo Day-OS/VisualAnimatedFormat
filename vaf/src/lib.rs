@@ -2,20 +2,20 @@ mod bitsize;
 mod buffer;
 mod errors;
 mod file_structure;
-mod writer;
 mod reader;
+mod writer;
 
 const HEADER: &str = "VAF";
-
-
 
 #[cfg(test)]
 mod tests {
     use bitvec::array::BitArray;
 
     use crate::{
-        bitsize::*, file_structure::{Chunk, ChunkSubdivision, Color, FileStructure, Frame, OperationTypes}, reader, writer
-        //writer,
+        bitsize::*,
+        file_structure::{Chunk, ChunkSubdivision, Color, FileStructure, Frame, OperationTypes},
+        reader,
+        writer, //writer,
     };
 
     #[test]
@@ -61,7 +61,6 @@ mod tests {
         println!("testing 3 bytes");
         let value = BitSize::new(0xFFFFFF, BitQ24).to_u32();
         assert_eq!(value, 0b111111111111111111111111);
-
     }
 
     #[test]
@@ -109,9 +108,9 @@ mod tests {
             width: 21,
             height: 1,
             has_alpha_channel: true,
-            subdivision: ChunkSubdivision{
+            subdivision: ChunkSubdivision {
                 x: BitSize(vec![BitArray::new(0)], BitQ2),
-                y: BitSize(vec![BitArray::new(0)], BitQ2)
+                y: BitSize(vec![BitArray::new(0)], BitQ2),
             },
             palette,
             frames: vec![Frame {
@@ -119,28 +118,42 @@ mod tests {
                     index: BitSize(vec![BitArray::new(0)], BitQDyn::BitQ1),
                     commands: vec![
                         OperationTypes::DRAW {
-                            palette_color_index: BitSize(vec![BitArray::new(3)], palette_draw_index_size.clone()),
+                            palette_color_index: BitSize(
+                                vec![BitArray::new(3)],
+                                palette_draw_index_size.clone(),
+                            ),
                         },
                         OperationTypes::DRAW {
-                            palette_color_index: BitSize(vec![BitArray::new(0)], palette_draw_index_size.clone()),
+                            palette_color_index: BitSize(
+                                vec![BitArray::new(0)],
+                                palette_draw_index_size.clone(),
+                            ),
                         },
                         OperationTypes::DRAW {
-                            palette_color_index: BitSize(vec![BitArray::new(1)], palette_draw_index_size.clone()),
+                            palette_color_index: BitSize(
+                                vec![BitArray::new(1)],
+                                palette_draw_index_size.clone(),
+                            ),
                         },
                         OperationTypes::DRAW {
-                            palette_color_index: BitSize(vec![BitArray::new(2)], palette_draw_index_size),
+                            palette_color_index: BitSize(
+                                vec![BitArray::new(2)],
+                                palette_draw_index_size,
+                            ),
                         },
                     ],
                 }],
             }],
         };
         let result = writer::write(file).unwrap();
-        println!("byte head: {:?} | bit head: {:?}", result.byte_head, result.bit_head);
+        println!(
+            "byte head: {:?} | bit head: {:?}",
+            result.byte_head, result.bit_head
+        );
 
         println!("{:x?}", result.to_byte_vec());
-        
+
         let read_file = reader::read(result.to_byte_vec());
         println!("{read_file:?}")
-
     }
 }

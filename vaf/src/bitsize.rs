@@ -1,9 +1,9 @@
-use std::fmt::Debug;
 use paste::paste;
+use std::fmt::Debug;
 
 use bitvec::{array::BitArray, order::Msb0};
 
-pub trait BitQuantity : Debug + Clone {
+pub trait BitQuantity: Debug + Clone {
     #[allow(dead_code)]
     fn get_bit_quantity(&self) -> usize;
 }
@@ -11,7 +11,7 @@ pub trait BitQuantity : Debug + Clone {
 /// Generates N BitQ(N)s
 macro_rules! impl_bitQuantity {
     ($size:expr) => {
-        paste!{
+        paste! {
             #[derive(Debug, Clone, Copy)]
             pub struct [<BitQ $size>];
 
@@ -60,14 +60,13 @@ macro_rules! impl_bitQuantityList {
                             Self::[<BitQ $size>] => $size,
                         )*
                     }
-                
+
                 }
             }
         }
 
     };
 }
-
 
 macro_rules! impl_bitQuantity_primitives {
     (for $($t:ty),+) => {
@@ -80,7 +79,9 @@ macro_rules! impl_bitQuantity_primitives {
 }
 
 impl_bitQuantity_primitives!(for u8, u16, u32);
-impl_bitQuantityList!(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24);
+impl_bitQuantityList!(
+    1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24
+);
 
 #[allow(dead_code)]
 #[derive(Debug, Clone)]
@@ -97,8 +98,8 @@ where
         let mut bytes = vec![];
         let value = value.to_le_bytes();
         let quantity: usize = bit_quantity.get_bit_quantity();
-        let full_bytes_quantity = quantity/8;
-        
+        let full_bytes_quantity = quantity / 8;
+
         //Adds all full bytes
         for index in 0..full_bytes_quantity {
             bytes.push(BitArray::<u8, Msb0>::new(value[index]))
@@ -107,12 +108,9 @@ where
         //In case the value does not fit into 8*n bits (Most cases)
         if quantity % 8 != 0 {
             let mut value = BitArray::<u8, Msb0>::new(value[full_bytes_quantity]);
-            value.shift_left(8 - (quantity%8));
+            value.shift_left(8 - (quantity % 8));
             bytes.push(value)
         }
-
-
-
 
         Self(bytes, bit_quantity)
     }
@@ -121,7 +119,7 @@ where
         let bitarr = &self.0;
         let mut bytes = vec![];
         let quantity: usize = self.1.get_bit_quantity();
-        let full_bytes_quantity = quantity/8;
+        let full_bytes_quantity = quantity / 8;
 
         for index in 0..full_bytes_quantity {
             bytes.push(bitarr[index].data);
@@ -130,31 +128,28 @@ where
         if quantity % 8 != 0 {
             let mut value = bitarr[full_bytes_quantity];
 
-            value.shift_right(8 - (quantity%8));
+            value.shift_right(8 - (quantity % 8));
             bytes.push(value.data)
         }
 
         return bytes;
     }
 
-    pub fn to_byte(&self) -> u8{
+    pub fn to_byte(&self) -> u8 {
         let mut clone = self.clone();
         let bytes: Vec<u8> = clone.to_bytes();
 
-        bytes.get(0)
-            .map(|n| n.clone())
-            .unwrap_or(0)
+        bytes.get(0).map(|n| n.clone()).unwrap_or(0)
     }
 
-    pub fn to_u32(&self) -> u32{
+    pub fn to_u32(&self) -> u32 {
         let mut result: [u8; 4] = [0, 0, 0, 0];
         let mut clone = self.clone();
         let bytes: Vec<u8> = clone.to_bytes();
 
         for index in 0..4 {
-            if let Some(value ) = bytes.get(index){
+            if let Some(value) = bytes.get(index) {
                 result[index] = value.clone();
-                
             }
         }
         u32::from_le_bytes(result)
