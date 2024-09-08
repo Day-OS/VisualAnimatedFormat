@@ -3,7 +3,7 @@ use paste::paste;
 
 use bitvec::{array::BitArray, order::Msb0};
 
-pub trait BitQuantity : Debug {
+pub trait BitQuantity : Debug + Clone {
     #[allow(dead_code)]
     fn get_bit_quantity(&self) -> usize;
 }
@@ -48,7 +48,7 @@ macro_rules! impl_bitQuantityList {
                     }
                 }
 
-                pub fn get_from_trait(quantity: Box<dyn BitQuantity>) -> Option<Self>{
+                pub fn get_from_trait<T: BitQuantity>(quantity: T) -> Option<Self>{
                     Self::get_from_quantity(quantity.get_bit_quantity())
                 }
             }
@@ -83,7 +83,7 @@ impl_bitQuantity_primitives!(for u8, u16, u32);
 impl_bitQuantityList!(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24);
 
 #[allow(dead_code)]
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct BitSize<Q>(pub Vec<BitArray<u8, Msb0>>, pub Q)
 where
     Q: BitQuantity;
@@ -117,7 +117,7 @@ where
         Self(bytes, bit_quantity)
     }
     #[allow(dead_code)]
-    pub fn to_byte(&mut self) -> Vec<u8> {
+    pub fn to_bytes(&mut self) -> Vec<u8> {
         let bitarr = &self.0;
         let mut bytes = vec![];
         let quantity: usize = self.1.get_bit_quantity();
@@ -137,9 +137,19 @@ where
         return bytes;
     }
 
-    pub fn to_u32(&mut self) -> u32{
+    pub fn to_byte(&self) -> u8{
+        let mut clone = self.clone();
+        let bytes: Vec<u8> = clone.to_bytes();
+
+        bytes.get(0)
+            .map(|n| n.clone())
+            .unwrap_or(0)
+    }
+
+    pub fn to_u32(&self) -> u32{
         let mut result: [u8; 4] = [0, 0, 0, 0];
-        let mut bytes: Vec<u8> = self.to_byte();
+        let mut clone = self.clone();
+        let bytes: Vec<u8> = clone.to_bytes();
 
         for index in 0..4 {
             if let Some(value ) = bytes.get(index){

@@ -47,10 +47,48 @@ pub struct FileStructure {
     pub width: u16,
     pub height: u16,
     pub has_alpha_channel: bool,
-    pub chunks_x: BitSize<BitQ2>,
-    pub chunks_y: BitSize<BitQ2>,
+    pub subdivision: ChunkSubdivision,
+    
     pub palette: Vec<Color>,
     pub frames: Vec<Frame>,
+}
+
+/// Chunk Subdivisions are a way to declare how much divisions are made and in which axis they are divided
+/// 
+/// ```
+///x:0 y:1 x:1 y:0  x:0 y:1 
+///┌─────┐ ┌──┬──┐ ┌───────┐
+///│     │ │  │  │ │       │
+///│     │ │  │  │ │       │
+///│     │ │  │  │ ├───────┤
+///│     │ │  │  │ │       │
+///│     │ │  │  │ │       │
+///└─────┘ └──┴──┘ └───────┘
+///x:1 y:1 x:0 y:2  x:3 y:0         
+///┌──┬──┐ ┌─────┐ ┌┬┬┬┬┬┬┬┐
+///│  │  │ │_____│ │││││││││
+///│  │  │ │     │ │││││││││
+///├──┼──┤ ├─────┤ │││││││││
+///│  │  │ │_____│ │││││││││
+///│  │  │ │     │ │││││││││
+///└──┴──┘ └─────┘ └┴┴┴┴┴┴┴┘
+/// ```
+#[derive(Debug)]
+pub struct ChunkSubdivision{
+    pub x: BitSize<BitQ2>,
+    pub y: BitSize<BitQ2>
+}
+
+impl ChunkSubdivision{
+    /// This returns how many chunks will be present in this chunk subdivision setup
+    pub fn get_subdivision_quantity(self) -> u8{
+        let chunkx = self.x.to_byte() + 1;
+        let chunky = self.y.to_byte() + 1;
+        // the need to convert u8 to u32 is pretty weird...
+        // TO-DO: Code so this conversion is not needed
+        let result = u8::pow(2, chunkx.into()) * u8::pow(2, chunky.into());
+        return result;
+    }
 }
 
 #[derive(PartialEq, Eq, Debug)]

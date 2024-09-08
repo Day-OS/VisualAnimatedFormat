@@ -46,8 +46,8 @@ pub fn write(file: file_structure::FileStructure) -> Result<Buffer, WriteError> 
     buffer.bit_head = 8;
 
     // How many divisions theres on each axis 1 subdivison = 2 chunks in that axis. 3 divisions are 6 chunks in that axis.
-    buffer.append_bitsize(file.chunks_x);
-    buffer.append_bitsize(file.chunks_y);
+    buffer.append_bitsize(file.subdivision.x.clone());
+    buffer.append_bitsize(file.subdivision.y.clone());
 
     for color in file.palette {
         //Representing there's more colors the next information are colors
@@ -66,13 +66,21 @@ pub fn write(file: file_structure::FileStructure) -> Result<Buffer, WriteError> 
 
     // Building the image:
 
+    let chunks_quantity = file.subdivision.get_subdivision_quantity();
+
     for frame in file.frames {
+        //Tells that there will be frames ahead
+        buffer.append_bitsize(BitSize::new(1, BitQ1));
         for chunk in frame.chunks {
+            println!("{chunks_quantity}");
             for operations in chunk.commands {
                 
             }
         }
     }
+    //Tells that there are no frames ahead
+    buffer.append_bitsize(BitSize::new(0, BitQ1));
+
 
 
 

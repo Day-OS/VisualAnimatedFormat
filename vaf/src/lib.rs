@@ -14,7 +14,7 @@ mod tests {
     use bitvec::array::BitArray;
 
     use crate::{
-        bitsize::*, file_structure::{Chunk, Color, FileStructure, Frame, OperationTypes}, reader, writer
+        bitsize::*, file_structure::{Chunk, ChunkSubdivision, Color, FileStructure, Frame, OperationTypes}, reader, writer
         //writer,
     };
 
@@ -109,8 +109,10 @@ mod tests {
             width: 21,
             height: 1,
             has_alpha_channel: true,
-            chunks_x: BitSize(vec![BitArray::new(0)], BitQ2),
-            chunks_y: BitSize(vec![BitArray::new(0)], BitQ2),
+            subdivision: ChunkSubdivision{
+                x: BitSize(vec![BitArray::new(0)], BitQ2),
+                y: BitSize(vec![BitArray::new(0)], BitQ2)
+            },
             palette,
             frames: vec![Frame {
                 chunks: vec![Chunk {
