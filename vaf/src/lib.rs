@@ -9,11 +9,13 @@ const HEADER: &str = "VAF";
 
 #[cfg(test)]
 mod tests {
+    use std::{collections::HashMap, time::Instant};
+
     use bitvec::array::BitArray;
 
     use crate::{
         bitsize::*,
-        file_structure::{Chunk, ChunkSubdivision, Color, FileStructure, Frame, OperationTypes},
+        file_structure::{ChunkSubdivision, Color, FileStructure, Frame, OperationTypes},
         reader,
         writer, //writer,
     };
@@ -75,6 +77,8 @@ mod tests {
 
     #[test]
     fn write_and_verify_file() {
+        let start = Instant::now();
+
         let palette = vec![
             Color {
                 r: 0xFF,
@@ -102,7 +106,7 @@ mod tests {
             },
         ];
         let palette_draw_index_size = f32::log2(palette.len() as f32).ceil() as usize;
-        let palette_draw_index_size = BitQDyn::get_from_quantity(palette_draw_index_size).unwrap();
+        let pallete_depth = BitQDyn::get_from_quantity(palette_draw_index_size).unwrap();
         let file: FileStructure = FileStructure {
             metadata: "Hello World!".to_string(),
             width: 21,
@@ -112,40 +116,46 @@ mod tests {
                 x: BitSize(vec![BitArray::new(0)], BitQ2),
                 y: BitSize(vec![BitArray::new(0)], BitQ2),
             },
+            pallete_depth,
             palette,
             frames: vec![Frame {
-                chunks: vec![Chunk {
-                    index: BitSize(vec![BitArray::new(0)], BitQDyn::BitQ1),
-                    commands: vec![
-                        OperationTypes::DRAW {
-                            palette_color_index: BitSize(
-                                vec![BitArray::new(3)],
-                                palette_draw_index_size.clone(),
-                            ),
-                        },
-                        OperationTypes::DRAW {
-                            palette_color_index: BitSize(
-                                vec![BitArray::new(0)],
-                                palette_draw_index_size.clone(),
-                            ),
-                        },
-                        OperationTypes::DRAW {
-                            palette_color_index: BitSize(
-                                vec![BitArray::new(1)],
-                                palette_draw_index_size.clone(),
-                            ),
-                        },
-                        OperationTypes::DRAW {
-                            palette_color_index: BitSize(
-                                vec![BitArray::new(2)],
-                                palette_draw_index_size,
-                            ),
-                        },
-                    ],
-                }],
+                chunks: HashMap::from([
+                    (
+                        BitSize(vec![BitArray::new(0)], BitQDyn::BitQ1),
+                        vec![
+                            OperationTypes::DRAW {
+                                palette_color_index: BitSize(
+                                    vec![BitArray::new(3)],
+                                    pallete_depth.clone(),
+                                ),
+                            },
+                            OperationTypes::DRAW {
+                                palette_color_index: BitSize(
+                                    vec![BitArray::new(0)],
+                                    pallete_depth.clone(),
+                                ),
+                            },
+                            OperationTypes::DRAW {
+                                palette_color_index: BitSize(
+                                    vec![BitArray::new(1)],
+                                    pallete_depth.clone(),
+                                ),
+                            },
+                            OperationTypes::DRAW {
+                                palette_color_index: BitSize(
+                                    vec![BitArray::new(2)],
+                                    pallete_depth,
+                                ),
+                            }
+                        ]
+                    )
+                ])
             }],
         };
         let result = writer::write(file).unwrap();
+        let write_elapsed = start.elapsed();
+        let read_start = Instant::now();
+
         println!(
             "byte head: {:?} | bit head: {:?}",
             result.byte_head, result.bit_head
@@ -154,6 +164,16 @@ mod tests {
         println!("{:x?}", result.to_byte_vec());
 
         let read_file = reader::read(result.to_byte_vec());
-        println!("{read_file:?}")
+
+        let read_elapsed = read_start.elapsed();
+        let total_elapsed = start.elapsed();
+        println!("{read_file:?}");
+
+        println!(
+            "TOTAL ELAPSED TIME: {}secs | Write elapsed time: {}secs | Read elapsed time: {}secs",
+            total_elapsed.as_secs_f64(),
+            write_elapsed.as_secs_f64(),
+            read_elapsed.as_secs_f64()
+        )
     }
 }

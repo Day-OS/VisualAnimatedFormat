@@ -1,6 +1,8 @@
+use std::collections::HashMap;
+
 use crate::bitsize::{BitQ2, BitQ4, BitQ5, BitQ6, BitQDyn, BitQuantity, BitSize};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum OperationTypes {
     DRAW {
         palette_color_index: BitSize<BitQDyn>,
@@ -47,7 +49,7 @@ pub struct FileStructure {
     pub height: u16,
     pub has_alpha_channel: bool,
     pub subdivision: ChunkSubdivision,
-
+    pub pallete_depth: BitQDyn,
     pub palette: Vec<Color>,
     pub frames: Vec<Frame>,
 }
@@ -101,14 +103,35 @@ pub struct Color {
 
 #[derive(Debug)]
 pub struct Frame {
-    pub chunks: Vec<Chunk>,
+    pub chunks: HashMap<BitSize<BitQDyn>, Vec<OperationTypes>>,
 }
 
-#[derive(Debug)]
-pub struct Chunk {
-    pub index: BitSize<BitQDyn>,
-    pub commands: Vec<OperationTypes>,
+
+impl Frame {
+    /// Gets ordered chunks in a list
+    pub fn get_chunks_ordered(&self) -> Vec<(u8, &Vec<OperationTypes>)>{
+        let mut list: Vec<(u8, &Vec<OperationTypes>)> = self.get_chunk_u8().into_iter().collect();
+        
+        list.sort_by(|a, b|{
+            a.0.cmp(&b.0)
+        });
+        list
+    }
+
+    pub fn get_chunk_u8(&self) -> HashMap<u8, &Vec<OperationTypes>>{
+        let mut map = HashMap::<u8, &Vec<OperationTypes>>::new();
+
+        // Turn BitSize into u8 and then creates a new map from it
+        for (key, value) in self.chunks.iter().map(|(bit_size, operations)|{
+            //We know that a frame have a limit of 64 subdivisions, so a byte is just fine for that
+            (bit_size.to_byte(), operations)
+        }) {
+            map.insert(key, value);
+        } 
+        map
+    }
 }
+
 
 impl FileStructure {
     pub fn test_eq(&self, second: Self) {

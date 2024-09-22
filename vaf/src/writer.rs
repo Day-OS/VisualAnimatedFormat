@@ -1,6 +1,9 @@
-use crate::bitsize::{BitQ1, BitQ16, BitQ8, BitSize};
+use std::collections::HashMap;
+
+use crate::bitsize::{BitQ1, BitQ16, BitQ8, BitQDyn, BitQuantity, BitSize};
 use crate::buffer::Buffer;
 use crate::errors::WriteError;
+use crate::file_structure::OperationTypes;
 use crate::{file_structure, HEADER};
 
 pub fn write(file: file_structure::FileStructure) -> Result<Buffer, WriteError> {
@@ -64,16 +67,48 @@ pub fn write(file: file_structure::FileStructure) -> Result<Buffer, WriteError> 
 
     let chunks_quantity = file.subdivision.get_subdivision_quantity();
 
+    let mut first_time: bool = true;
     for frame in file.frames {
         //Tells that there will be frames ahead
         buffer.append_bitsize(BitSize::new(1, BitQ1))?;
-        for chunk in frame.chunks {
+
+        let chunks = frame.get_chunk_u8();
+
+        // if it is the first frame, fill empty chunks with dummy chunks, this prevent the program from going crazy
+        if first_time {
+            let mut chunks_temp: HashMap<u8, Vec<OperationTypes>> = HashMap::new();
+            
+            for i in 0..chunks_quantity-1 {
+                if let Some(chunk) = chunks.get(&i) {
+                    chunks_temp.insert(i, chunk.to_vec());
+                }else{
+                    let chunk = get_dummy_chunk(file.height as u32 * file.width as u32, file.pallete_depth);
+                    chunks_temp.insert(i, chunk);
+                }
+            }
+            first_time = false;
+        }
+
+
+
+
+        for chunk in chunks {
             println!("{chunks_quantity}");
-            for operations in chunk.commands {}
+            //for operations in chunk.commands {
+            //    
+            //}
         }
     }
     //Tells that there are no frames ahead
     buffer.append_bitsize(BitSize::new(0, BitQ1))?;
 
     Ok(buffer)
+}
+
+fn get_dummy_chunk(quantity_of_pixels: u32, bit_quantity: BitQDyn) -> Vec<OperationTypes>{
+    let mut vec = Vec::<OperationTypes>::new();
+    for i in 0..(quantity_of_pixels-1){
+        vec.push(OperationTypes::DRAW { palette_color_index: BitSize::new(i, bit_quantity) });
+    }
+    vec
 }

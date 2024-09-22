@@ -6,6 +6,9 @@ use bitvec::{array::BitArray, order::Msb0};
 pub trait BitQuantity: Debug + Clone {
     #[allow(dead_code)]
     fn get_bit_quantity(&self) -> usize;
+    fn get_byte_quantity(&self) -> usize {
+        self.get_bit_quantity() / 8
+    }
 }
 
 /// Generates N BitQ(N)s
@@ -32,7 +35,7 @@ macro_rules! impl_bitQuantityList {
         )*
 
         paste!{
-            #[derive(Debug, Clone)]
+            #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
             pub enum BitQDyn{
                 $(
                     [<BitQ $size>],
@@ -84,7 +87,7 @@ impl_bitQuantityList!(
 );
 
 #[allow(dead_code)]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct BitSize<Q>(pub Vec<BitArray<u8, Msb0>>, pub Q)
 where
     Q: BitQuantity;
@@ -98,7 +101,7 @@ where
         let mut bytes = vec![];
         let value = value.to_le_bytes();
         let quantity: usize = bit_quantity.get_bit_quantity();
-        let full_bytes_quantity = quantity / 8;
+        let full_bytes_quantity = bit_quantity.get_byte_quantity();
 
         //Adds all full bytes
         for index in 0..full_bytes_quantity {
@@ -118,8 +121,8 @@ where
     pub fn to_bytes(&mut self) -> Vec<u8> {
         let bitarr = &self.0;
         let mut bytes = vec![];
-        let quantity: usize = self.1.get_bit_quantity();
-        let full_bytes_quantity = quantity / 8;
+        let quantity: usize = self.get_bit_quantity();
+        let full_bytes_quantity = self.get_byte_quantity();
 
         for index in 0..full_bytes_quantity {
             bytes.push(bitarr[index].data);
