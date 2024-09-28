@@ -1,24 +1,24 @@
 use std::collections::HashMap;
 
-use crate::bitsize::{BitQ2, BitQ4, BitQ5, BitQ6, BitQDyn, BitQuantity, BitSize};
+use crate::bitsize::{BitQ2, BitQ4, BitQ5, BitQ6, BitQuantity};
 
 #[derive(Debug, Clone)]
 pub enum OperationTypes {
     DRAW {
-        palette_color_index: BitSize<BitQDyn>,
+        palette_color_index: Box<dyn BitQuantity>,
     },
     RUN {
-        run_length: BitSize<BitQ6>,
+        run_length: BitQ6,
     },
     DIFF {
-        r: BitSize<BitQ2>,
-        g: BitSize<BitQ2>,
-        b: BitSize<BitQ2>,
+        r: BitQ2,
+        g: BitQ2,
+        b: BitQ2,
     },
     BIGDIFF {
-        g: BitSize<BitQ6>,
-        r_g: BitSize<BitQ4>,
-        b_g: BitSize<BitQ4>,
+        g:   BitQ6,
+        r_g: BitQ4,
+        b_g: BitQ4,
     },
 }
 
@@ -26,15 +26,14 @@ impl OperationTypes {
     pub(crate) fn to_number(&self) -> u8 {
         match self {
             OperationTypes::DRAW {
-                palette_color_index,
+                palette_color_index: _,
             } => 0,
-            OperationTypes::RUN { run_length } => 1,
-            OperationTypes::DIFF { r, g, b } => 2,
-            OperationTypes::BIGDIFF { g, r_g, b_g } => 3,
+            OperationTypes::RUN { run_length: _ } => 1,
+            OperationTypes::DIFF { r: _, g: _, b: _ } => 2,
+            OperationTypes::BIGDIFF { g: _, r_g: _, b_g: _ } => 3,
         }
     }
 }
-
 enum DrawOperationTypes {
     RGB,
     RGBA,
@@ -49,47 +48,42 @@ pub struct FileStructure {
     pub height: u16,
     pub has_alpha_channel: bool,
     pub subdivision: ChunkSubdivision,
-    pub pallete_depth: BitQDyn,
+    pub pallete_depth: Box<dyn BitQuantity>,
     pub palette: Vec<Color>,
     pub frames: Vec<Frame>,
 }
 
-/// Chunk Subdivisions are a way to declare how much divisions are made and in which axis they are divided
+/// Chunk Subdivisions are a way to declare how much divisions they are divided
 ///
 /// ```
-///x:0 y:1 x:1 y:0  x:0 y:1
-///┌─────┐ ┌──┬──┐ ┌───────┐
-///│     │ │  │  │ │       │
-///│     │ │  │  │ │       │
-///│     │ │  │  │ ├───────┤
-///│     │ │  │  │ │       │
-///│     │ │  │  │ │       │
-///└─────┘ └──┴──┘ └───────┘
-///x:1 y:1 x:0 y:2  x:3 y:0         
-///┌──┬──┐ ┌─────┐ ┌┬┬┬┬┬┬┬┐
-///│  │  │ │_____│ │││││││││
-///│  │  │ │     │ │││││││││
-///├──┼──┤ ├─────┤ │││││││││
-///│  │  │ │_____│ │││││││││
-///│  │  │ │     │ │││││││││
-///└──┴──┘ └─────┘ └┴┴┴┴┴┴┴┘
+//                           QUANT:3
+//QUANT:0 QUANT:1  QUANT:2  ┌┬┬┬┬┬┬┬┐
+//┌─────┐ ┌──┬──┐ ┌─┬─┬─┬─┐ ├┼┼┼┼┼┼┼┤
+//│     │ │  │  │ ├─┼─┼─┼─┤ ├┼┼┼┼┼┼┼┤
+//│     │ │  │  │ │ │ │ │ │ ├┼┼┼┼┼┼┼┤
+//│     │ ├──┼──┤ ├─┼─┼─┼─┤ ├┼┼┼┼┼┼┼┤
+//│     │ │  │  │ │ │ │ │ │ ├┼┼┼┼┼┼┼┤
+//│     │ │  │  │ ├─┼─┼─┼─┤ ├┼┼┼┼┼┼┼┤
+//└─────┘ └──┴──┘ └─┴─┴─┴─┘ └┴┴┴┴┴┴┴┘
 /// ```
 #[derive(Debug)]
-pub struct ChunkSubdivision {
-    pub x: BitSize<BitQ2>,
-    pub y: BitSize<BitQ2>,
-}
+pub struct ChunkSubdivision (pub BitQ2);
 
 impl ChunkSubdivision {
-    /// This returns how many chunks will be present in this chunk subdivision setup
-    pub fn get_subdivision_quantity(self) -> u8 {
-        let chunkx = self.x.to_byte() + 1;
-        let chunky = self.y.to_byte() + 1;
+    /// This returns how many chunks will be present in this chunk subdivision
+    pub fn get_subdivision_quantity(&mut self) -> u8 {
+        let quantity = self.0.to_byte() + 1;
         // the need to convert u8 to u32 is pretty weird...
         // TO-DO: Code so this conversion is not needed
-        let result = u8::pow(2, chunkx.into()) * u8::pow(2, chunky.into());
+        let mut  result = u8::pow(2, quantity.into());
+        result = result * result;
         return result;
     }
+    pub fn get_subdivision_size(&mut self, height: u16, width: u16) -> u16{
+        let quantity = self.get_subdivision_quantity();
+        (height*width)/(quantity as u16)
+    }
+    
 }
 
 #[derive(PartialEq, Eq, Debug)]
@@ -103,35 +97,8 @@ pub struct Color {
 
 #[derive(Debug)]
 pub struct Frame {
-    pub chunks: HashMap<BitSize<BitQDyn>, Vec<OperationTypes>>,
+    pub chunks: Vec<Option<Vec<OperationTypes>>>,
 }
-
-
-impl Frame {
-    /// Gets ordered chunks in a list
-    pub fn get_chunks_ordered(&self) -> Vec<(u8, &Vec<OperationTypes>)>{
-        let mut list: Vec<(u8, &Vec<OperationTypes>)> = self.get_chunk_u8().into_iter().collect();
-        
-        list.sort_by(|a, b|{
-            a.0.cmp(&b.0)
-        });
-        list
-    }
-
-    pub fn get_chunk_u8(&self) -> HashMap<u8, &Vec<OperationTypes>>{
-        let mut map = HashMap::<u8, &Vec<OperationTypes>>::new();
-
-        // Turn BitSize into u8 and then creates a new map from it
-        for (key, value) in self.chunks.iter().map(|(bit_size, operations)|{
-            //We know that a frame have a limit of 64 subdivisions, so a byte is just fine for that
-            (bit_size.to_byte(), operations)
-        }) {
-            map.insert(key, value);
-        } 
-        map
-    }
-}
-
 
 impl FileStructure {
     pub fn test_eq(&self, second: Self) {

@@ -1,7 +1,7 @@
 use bitvec::{array::BitArray, order::Msb0};
 use thiserror::Error;
 
-use crate::bitsize::{BitQuantity, BitSize};
+use crate::bitsize::BitQuantity;
 
 #[derive(Error, Debug)]
 pub enum WriteError {
@@ -46,12 +46,12 @@ pub enum BitSizeError {
 }
 
 impl BitSizeError {
-    pub fn throw_byte_index_out_of_bound<Q: BitQuantity>(
-        data: BitSize<Q>,
+    pub fn throw_byte_index_out_of_bound(
+        data: Vec<u8>,
         index: usize,
     ) -> BitSizeError {
         BitSizeError::ByteIndexOutOfBound {
-            data: data.clone().to_bytes(),
+            data: data,
             index: index,
         }
     }

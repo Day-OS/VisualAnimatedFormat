@@ -24,55 +24,43 @@ mod tests {
     fn bit_size() {
         println!("testing 1 byte!");
 
-        let value = BitSize::new(0xFF, BitQ8).to_u32();
+        let value = BitQ8::new(0xFF).to_u32();
         assert_eq!(value, 0b11111111);
 
-        let value = BitSize::new(0xFF, BitQ7).to_u32();
+        let value = BitQ7::new(0xFF).to_u32();
         assert_eq!(value, 0b1111111);
 
-        let value = BitSize::new(0xFF, BitQ6).to_u32();
+        let value = BitQ6::new(0xFF).to_u32();
         assert_eq!(value, 0b111111);
 
-        let value = BitSize::new(0xFF, BitQ5).to_u32();
+        let value = BitQ5::new(0xFF).to_u32();
         assert_eq!(value, 0b11111);
 
-        let value = BitSize::new(0xFF, BitQ4).to_u32();
+        let value = BitQ4::new(0xFF).to_u32();
         assert_eq!(value, 0b1111);
 
-        let value = BitSize::new(0xFF, BitQ3).to_u32();
+        let value = BitQ3::new(0xFF).to_u32();
         assert_eq!(value, 0b111);
 
-        let value = BitSize::new(0xFF, BitQ2).to_u32();
+        let value = BitQ2::new(0xFF).to_u32();
         assert_eq!(value, 0b11);
 
-        let value = BitSize::new(0xFF, BitQ1).to_u32();
+        let value = BitQ1::new(0xFF).to_u32();
         assert_eq!(value, 0b1);
-
         println!("testing 1 and a half bytes");
-        let value = BitSize::new(0xFFFF, BitQ12).to_u32();
+        let value  = BitQ12::new(0xFFFF).to_u32();
         assert_eq!(value, 0b111111111111);
 
         println!("testing 2 bytes");
-        let value = BitSize::new(0xFFFF, BitQ16).to_u32();
+        let value = BitQ16::new(0xFFFF).to_u32();
         assert_eq!(value, 0b1111111111111111);
 
         println!("testing 2 and a half bytes");
-        let value = BitSize::new(0xFFFFFF, BitQ20).to_u32();
         assert_eq!(value, 0b11111111111111111111);
 
         println!("testing 3 bytes");
-        let value = BitSize::new(0xFFFFFF, BitQ24).to_u32();
+        let value = BitQ24::new(0xFFFFFF).to_u32();
         assert_eq!(value, 0b111111111111111111111111);
-    }
-
-    #[test]
-    fn bit_size_primitives() {
-        let value: u8 = 0;
-        assert_eq!(value.get_bit_quantity(), 8);
-        let value: u16 = 0;
-        assert_eq!(value.get_bit_quantity(), 16);
-        let value: u32 = 0;
-        assert_eq!(value.get_bit_quantity(), 32);
     }
 
     #[test]
@@ -106,50 +94,34 @@ mod tests {
             },
         ];
         let palette_draw_index_size = f32::log2(palette.len() as f32).ceil() as usize;
-        let pallete_depth = BitQDyn::get_from_quantity(palette_draw_index_size).unwrap();
+        //TODO: Fix this later
+        let pallete_depth: Box<BitQ24> = Box::new(BitQ24::new(palette_draw_index_size.try_into().unwrap())); //BitQDyn::get_from_quantity(palette_draw_index_size).unwrap();
         let file: FileStructure = FileStructure {
             metadata: "Hello World!".to_string(),
             width: 21,
             height: 1,
             has_alpha_channel: true,
-            subdivision: ChunkSubdivision {
-                x: BitSize(vec![BitArray::new(0)], BitQ2),
-                y: BitSize(vec![BitArray::new(0)], BitQ2),
-            },
+            subdivision: ChunkSubdivision(BitQ2::new(0)),
             pallete_depth,
             palette,
             frames: vec![Frame {
-                chunks: HashMap::from([
-                    (
-                        BitSize(vec![BitArray::new(0)], BitQDyn::BitQ1),
-                        vec![
-                            OperationTypes::DRAW {
-                                palette_color_index: BitSize(
-                                    vec![BitArray::new(3)],
-                                    pallete_depth.clone(),
-                                ),
-                            },
-                            OperationTypes::DRAW {
-                                palette_color_index: BitSize(
-                                    vec![BitArray::new(0)],
-                                    pallete_depth.clone(),
-                                ),
-                            },
-                            OperationTypes::DRAW {
-                                palette_color_index: BitSize(
-                                    vec![BitArray::new(1)],
-                                    pallete_depth.clone(),
-                                ),
-                            },
-                            OperationTypes::DRAW {
-                                palette_color_index: BitSize(
-                                    vec![BitArray::new(2)],
-                                    pallete_depth,
-                                ),
-                            }
-                        ]
-                    )
-                ])
+                chunks: vec![Some(
+                    vec![
+                        OperationTypes::DRAW {
+                            palette_color_index: Box::new(BitQ2::new(3))
+                        },
+                        OperationTypes::DRAW {
+                            palette_color_index: Box::new(BitQ2::new(0))
+                        },
+                        OperationTypes::DRAW {
+                            palette_color_index: Box::new(BitQ2::new(1))
+                        },
+                        OperationTypes::DRAW {
+                            palette_color_index: Box::new(BitQ2::new(2))
+                        }
+                    ]
+                )]
+                
             }],
         };
         let result = writer::write(file).unwrap();

@@ -1,7 +1,6 @@
 use bitvec::{array::BitArray, order::Msb0};
-
 use crate::{
-    bitsize::{BitQ1, BitQ16, BitQ8, BitQuantity, BitSize},
+    bitsize::{BitQ1, BitQ16, BitQ8, BitQuantity},
     errors::{self, BufferError},
 };
 
@@ -19,22 +18,22 @@ impl Buffer {
         _vec.iter().map(|bitarr| bitarr.data).collect()
     }
 
-    pub fn append_string(&mut self, string: String) {
+    pub fn append_string(&mut self, string: String) -> Result<(), BufferError> {
         let mut chars = string.as_bytes().to_vec();
         chars.push(0);
-        self.append_chars(chars)
+        self.append_chars(chars)?;
+        Ok(())
     }
 
-    pub fn append_chars(&mut self, chars: Vec<u8>) {
+    pub fn append_chars(&mut self, chars: Vec<u8>) -> Result<(), BufferError> {
         for byte in chars {
-            let bit_size = BitSize::new(byte.into(), BitQ8);
-            self.append_bitsize(bit_size);
+            let bit_size = Box::new(BitQ8::new(byte.into()));
+            self.append_bitsize(bit_size)?;
         }
+        Ok(())
     }
 
-    pub fn append_bitsize<Q>(&mut self, bit_size: BitSize<Q>) -> Result<(), BufferError>
-    where
-        Q: BitQuantity,
+    pub fn append_bitsize(&mut self, mut bit_size: Box<dyn BitQuantity>) -> Result<(), BufferError>
     {
         let buffer = &mut self.body;
 
@@ -50,6 +49,7 @@ impl Buffer {
 
         // Read every bit from bit_size and transfers it into our buffer
         for i in 0..byte_quantity {
+            
             // if bit head reached the byte limit (8 bits), start to iterating in the next byte
             if *bit_head >= 8 {
                 *bit_head = 0;
@@ -57,33 +57,39 @@ impl Buffer {
                 buffer.push(BitArray::new(0));
             }
 
-            let byte = bit_size.0.get(i / 8).ok_or(
-                errors::BitSizeError::throw_byte_index_out_of_bound(bit_size.clone(), i / 8),
-            )?;
-            let bit = byte
-                .get(i % 8)
-                .ok_or(errors::BitSizeError::throw_bit_index_out_of_bound(
-                    byte.clone(),
-                    i % 8,
-                ))?;
+            let byte = bit_size.get(i / 8);
+            
+            if let None = byte {
+                return Err(BufferError::BitSizeError(
+                    errors::BitSizeError::throw_byte_index_out_of_bound(bit_size.to_bytes(), i / 8)    
+                ));
+            }
 
-            buffer[byte_head.clone() as usize].set((*bit_head).into(), *bit);
+            let bit = byte.unwrap().get(i % 8);
+            
+            if let None = bit {
+                return Err(BufferError::BitSizeError(
+                    errors::BitSizeError::throw_bit_index_out_of_bound(
+                        *byte.unwrap(),
+                        i % 8,
+                    )
+                ));
+            }
+            buffer[byte_head.clone() as usize].set((*bit_head).into(), *bit.unwrap());
             *bit_head += 1;
         }
 
         Ok(())
     }
 
-    pub fn read_bits<Q>(&mut self, size: Q) -> Result<BitSize<Q>, BufferError>
+    pub fn read_bits<'a, Q>(&mut self, size: usize) -> Result<Box<dyn BitQuantity + 'a>, BufferError>
     where
-        Q: BitQuantity,
+        Q:  BitQuantity + 'a,
     {
-        let quantity = size.get_bit_quantity();
+        let quantity = size;
         let buffer = &mut self.body;
         let bit_head = &mut self.bit_head;
         let byte_head = &mut self.byte_head;
-
-        let mut bit_size = BitSize::new(0, size);
 
         let mut last_byte =
             buffer
@@ -91,6 +97,8 @@ impl Buffer {
                 .ok_or(BufferError::BufferIndexOutOfBound {
                     index: *byte_head as usize,
                 })?;
+
+        let mut bit_size = Box::new(Q::new(0));
         for i in 0..quantity {
             // if bit head reached the byte limit (8 bits), start to iterating in the next byte
             if *bit_head >= 8 {
@@ -102,7 +110,7 @@ impl Buffer {
                         .ok_or(BufferError::BufferIndexOutOfBound {
                             index: *byte_head as usize,
                         })?;
-            }
+            } 
 
             let bit = last_byte.get(*bit_head as usize).ok_or(
                 errors::BitSizeError::throw_bit_index_out_of_bound(
@@ -111,11 +119,15 @@ impl Buffer {
                 ),
             )?;
 
-            let _byte_err = bit_size.clone();
-            let byte = bit_size.0.get_mut(i / 8).ok_or(
-                errors::BitSizeError::throw_byte_index_out_of_bound(_byte_err, i / 8),
-            )?;
-            byte.set(i % 8, *bit);
+            let byte = bit_size.get_mut(i / 8);
+            
+            if let None = byte {
+                return Err(
+                    errors::BufferError::BitSizeError(
+                        errors::BitSizeError::throw_byte_index_out_of_bound(bit_size.to_bytes(), i / 8))
+                    )
+            }
+            byte.unwrap().set(i % 8, *bit);
             *bit_head += 1;
         }
         Ok(bit_size)
@@ -132,16 +144,23 @@ impl Buffer {
         let mut vec = vec![];
 
         for _ in 0..size.unwrap_or(((self.body.len() as u32) - self.byte_head) as usize) {
-            let byte = self.read_bits(BitQ8)?;
+            let mut byte = self.read_bits::<BitQ8>(8)?;
             let byte = byte
-                .0
-                .get(0)
-                .ok_or(errors::BitSizeError::throw_byte_index_out_of_bound(
-                    byte.clone(),
-                    0,
-                ))?;
-            vec.push(byte.data);
-            if byte.data == 0 {
+                .get(0);
+
+            if let None = byte {
+                return Err(
+                    errors::BufferError::BitSizeError(
+                        errors::BitSizeError::throw_byte_index_out_of_bound(
+                            self.to_byte_vec(),
+                            0,
+                        )
+                    )
+                )
+            }
+
+            vec.push(byte.unwrap().data);
+            if byte.unwrap().data == 0 {
                 break;
             }
         }
@@ -149,17 +168,17 @@ impl Buffer {
     }
 
     pub fn read_u16(&mut self) -> Result<u16, BufferError> {
-        let bytes = self.read_bits(BitQ16)?;
-        let vec: Vec<u8> = bytes.0.iter().map(|byte| byte.data).collect();
+        let mut bytes = self.read_bits::<BitQ16>(16)?;
+        let vec: Vec<u8> = bytes.to_bytes();
         let result = u16::from_le_bytes([
             *vec.get(0)
                 .ok_or(errors::BitSizeError::throw_byte_index_out_of_bound(
-                    bytes.clone(),
+                    vec.clone(),
                     0,
                 ))?,
             *vec.get(1)
                 .ok_or(errors::BitSizeError::throw_byte_index_out_of_bound(
-                    bytes.clone(),
+                    vec.clone(),
                     1,
                 ))?,
         ]);
@@ -167,33 +186,40 @@ impl Buffer {
     }
 
     pub fn read_bool(&mut self) -> Result<bool, BufferError> {
-        let bytes = self.read_bits(BitQ1)?;
-        let byte = bytes
-            .0
-            .get(0)
-            .ok_or(errors::BitSizeError::throw_byte_index_out_of_bound(
-                bytes.clone(),
-                0,
-            ))?;
-        let result = *byte
-            .get(0)
-            .ok_or(errors::BitSizeError::throw_bit_index_out_of_bound(
-                byte.clone(),
-                0,
-            ))?;
+        let mut bytes = self.read_bits::<BitQ1>(1)?;
+        let binding = bytes.to_bytes();
+        let byte = binding.get(0);
+        
+
+        if byte.is_none() {
+            return Err(errors::BufferError::BitSizeError(
+                errors::BitSizeError::throw_byte_index_out_of_bound(
+                    bytes.to_bytes(),
+                    0,
+                )
+            ));
+        }
+
+        let result: bool = *byte.unwrap() != 0;
+
+
         Ok(result)
     }
 
     pub fn read_u8(&mut self) -> Result<u8, BufferError> {
-        let bytes = self.read_bits(BitQ8)?;
+        let mut bytes = self.read_bits::<BitQ8>(8)?;
         let byte = bytes
-            .0
-            .get(0)
-            .ok_or(errors::BitSizeError::throw_byte_index_out_of_bound(
-                bytes.clone(),
-                0,
-            ))?;
-        let result = byte.data;
+            .get(0);
+
+        if let None = byte {
+            return Err(errors::BufferError::BitSizeError(
+                errors::BitSizeError::throw_byte_index_out_of_bound(
+                    bytes.to_bytes(),
+                    0,
+                )
+            ));
+        }
+        let result = byte.unwrap().data;
         Ok(result)
     }
 }

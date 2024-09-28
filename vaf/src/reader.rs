@@ -1,6 +1,6 @@
 use bitvec::array::BitArray;
 
-use crate::bitsize::{BitQ1, BitQ16, BitQ2, BitQ8, BitSize};
+use crate::bitsize::{BitQ1, BitQ16, BitQ2, BitQ8};
 use crate::buffer::Buffer;
 use crate::errors::{ReadError, WriteError};
 use crate::file_structure::{self, Color, FileStructure};
@@ -35,8 +35,8 @@ pub fn read(file: Vec<u8>) -> Result<FileStructure, ReadError> {
     //FOR THE SAKE OF READABILITY WE IGNORE THE REST OF THE ZEROS UNTIL IT REACHES THE NEXT BYTE
     buffer.bit_head = 8;
 
-    let chunks_x = buffer.read_bits(BitQ2)?;
-    let chunks_y = buffer.read_bits(BitQ2)?;
+    let chunks_x = buffer.read_bits::<BitQ2>(2)?;
+    let chunks_y = buffer.read_bits::<BitQ2>(2)?;
 
     let mut palette: Vec<Color> = vec![];
 
